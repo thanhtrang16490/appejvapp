@@ -24,8 +24,8 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: null,
   role: { name: 'public', description: 'Public User', id: 4 },
-  address: null,
-  avatar: null,
+  address: undefined,
+  avatar: undefined,
 };
 
 export default function HomePage() {
