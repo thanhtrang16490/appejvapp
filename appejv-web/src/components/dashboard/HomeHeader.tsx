@@ -1,0 +1,170 @@
+'use client';
+
+import { User } from '@/types';
+
+interface HomeHeaderProps {
+  user: User | null;
+}
+
+export default function HomeHeader({ user }: HomeHeaderProps) {
+  const formatPhone = (phone: string) => {
+    // Format phone as xxx xxx xxx (matching mobile app)
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+      return `${cleaned.slice(0, 3)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+    }
+    return phone;
+  };
+
+  const formatCurrency = (amount: number) => {
+    const roundedAmount = Math.round(amount / 1000) * 1000;
+    return new Intl.NumberFormat('vi-VN', {
+      maximumFractionDigits: 0,
+    }).format(roundedAmount);
+  };
+
+  const isAgent = user?.role_id === 1 || user?.role_id === 2;
+  const isCustomer = user?.role_id === 3;
+  const isPublic = user?.role_id === 4;
+
+  return (
+    <div className="bg-red-600 relative">
+      {/* Background overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-30 z-10"></div>
+      
+      <div className="relative z-20 px-4 pt-4 pb-6">
+        {/* Top section with user info and notifications */}
+        <div className="flex items-center justify-between mb-4">
+          {/* User info */}
+          <button 
+            onClick={() => {
+              if (isPublic) {
+                window.location.href = '/login';
+              } else {
+                window.location.href = '/profile';
+              }
+            }}
+            className="flex items-center flex-1 hover:opacity-80 transition-opacity"
+          >
+            <div className="w-10 h-10 rounded-full bg-white bg-opacity-30 border border-gray-300 flex items-center justify-center overflow-hidden">
+              {user?.avatar ? (
+                user.avatar === 'avatar-customer' ? (
+                  <img
+                    src="/images/avatar-customer.jpeg"
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                )
+              ) : null}
+              <div className={`w-full h-full flex items-center justify-center text-white ${user?.avatar ? 'hidden' : ''}`}>
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="ml-3 flex-1 text-left">
+              <p className="text-white text-base font-bold truncate">
+                {user?.name || 'Người dùng'}
+              </p>
+              <p className="text-yellow-400 text-sm truncate">
+                {isPublic ? 'Nhấn để đăng nhập' : (user?.phone ? formatPhone(user.phone) : '(Chưa đăng nhập)')}
+              </p>
+            </div>
+          </button>
+
+          {/* Notification icons */}
+          <div className="flex items-center space-x-2">
+            {isAgent && (
+              <button 
+                onClick={() => window.location.href = '/quotation'}
+                className="bg-black bg-opacity-20 rounded-full p-2 hover:bg-opacity-30"
+              >
+                <img
+                  src="/images/trail-icon.png"
+                  alt="Tạo báo giá"
+                  className="w-6 h-6"
+                />
+              </button>
+            )}
+            {!isPublic && (
+              <button 
+                onClick={() => window.location.href = '/notifications'}
+                className="bg-black bg-opacity-20 rounded-full p-2 hover:bg-opacity-30"
+              >
+                <img
+                  src="/images/bell.png"
+                  alt="Thông báo"
+                  className="w-6 h-6"
+                />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Income card - Only for agents */}
+        {isAgent && (
+          <div className="bg-gradient-to-r from-yellow-400 from-60% to-transparent rounded-lg p-3 bg-opacity-90 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-white text-sm mb-1">
+                  Thu nhập dự kiến T{new Date().getMonth() + 1}
+                </p>
+                <div className="flex items-center">
+                  <p className="text-white text-2xl font-bold mr-2">
+                    {formatCurrency(user?.total_commission || 0)}
+                  </p>
+                  <button className="p-1">
+                    <img
+                      src="/images/eye-icon.png"
+                      alt="Toggle visibility"
+                      className="w-9 h-9"
+                    />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                {user?.role_id !== 5 && (
+                  <button 
+                    onClick={() => window.location.href = '/community'}
+                    className="flex flex-col items-center hover:opacity-80"
+                  >
+                    <img
+                      src="/images/cong-dong.png"
+                      alt="Cộng đồng"
+                      className="w-6 h-6 mb-1"
+                    />
+                    <span className="text-white text-xs">Cộng đồng</span>
+                  </button>
+                )}
+                <button 
+                  onClick={() => window.location.href = '/stats'}
+                  className="flex flex-col items-center hover:opacity-80"
+                >
+                  <img
+                    src="/images/chart-pie.png"
+                    alt="Thống kê"
+                    className="w-6 h-6 mb-1"
+                  />
+                  <span className="text-white text-xs">Thống kê</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
