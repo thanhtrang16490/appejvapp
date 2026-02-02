@@ -135,7 +135,7 @@ export default function RoleSwitcher({ currentUser, onUserChange }: RoleSwitcher
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, dragStart, handleMouseMove]);
 
   // Auto-collapse after 5 seconds of inactivity
   useEffect(() => {

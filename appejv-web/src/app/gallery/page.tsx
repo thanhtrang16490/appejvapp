@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import RoleSwitcher from '@/components/demo/RoleSwitcher';
@@ -64,7 +64,7 @@ interface Sector {
 }
 
 // Mock data for sectors
-const mockSectors: Sector[] = [
+const mockSectors = [
   {
     id: 1,
     name: 'Appe JV',
@@ -225,11 +225,11 @@ const stripHtmlTags = (html: string) => {
 
 export default function GalleryPage() {
   const [currentUser, setCurrentUser] = useState<User>(defaultUser);
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
-  const [sectors, setSectors] = useState<Sector[]>(mockSectors);
-  const [loading, setLoading] = useState(false);
+  const [posts] = useState<Post[]>(mockPosts);
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({});
   const [showOptions, setShowOptions] = useState(false);
+  const [loading] = useState(false);
+  const sectors = mockSectors;
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const handleUserChange = (user: User) => {
@@ -260,7 +260,7 @@ export default function GalleryPage() {
     try {
       await navigator.clipboard.writeText(stripHtmlTags(post.content || ''));
       alert('Đã copy nội dung vào clipboard');
-    } catch (error) {
+    } catch {
       alert('Không thể copy nội dung');
     }
     setShowOptions(false);
@@ -279,7 +279,7 @@ export default function GalleryPage() {
         await navigator.clipboard.writeText(`${post.title}\n\n${stripHtmlTags(post.content || '')}`);
         alert('Đã copy nội dung để chia sẻ');
       }
-    } catch (error) {
+    } catch {
       alert('Không thể chia sẻ nội dung');
     }
     setShowOptions(false);

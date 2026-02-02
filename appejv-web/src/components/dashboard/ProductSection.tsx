@@ -1,6 +1,6 @@
 'use client';
 
-import { Sector, Combo } from '@/types';
+import { Sector } from '@/types';
 import { PlaceholderFrame } from '@/components/ui';
 
 interface ProductSectionProps {
@@ -16,15 +16,7 @@ export default function ProductSection({ sector }: ProductSectionProps) {
     }).format(roundedAmount);
   };
 
-  const handleViewAll = () => {
-    console.log('Navigate to sector:', sector.id);
-  };
-
-  const handleProductClick = (comboId: number) => {
-    console.log('Navigate to product:', comboId);
-  };
-
-  const getProductTag = (combo: Combo) => {
+  const getProductTag = () => {
     // No tag for products
     return null;
   };
@@ -72,10 +64,10 @@ export default function ProductSection({ sector }: ProductSectionProps) {
                   textSize="xs"
                 />
                 {/* Tag */}
-                {getProductTag(combo) && (
+                {getProductTag() && (
                   <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r">
                     <span className="text-xs font-semibold text-black">
-                      {getProductTag(combo)}
+                      {getProductTag()}
                     </span>
                   </div>
                 )}

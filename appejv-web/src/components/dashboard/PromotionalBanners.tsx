@@ -56,7 +56,7 @@ export default function PromotionalBanners() {
     };
 
     loadBanners();
-  }, []);
+  }, [mockBanners]);
 
   if (loading) {
     return (

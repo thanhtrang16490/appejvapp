@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { User } from '@/types';
-import BottomNavigation from '@/components/layout/BottomNavigation';
 import RoleSwitcher from '@/components/demo/RoleSwitcher';
 import { PlaceholderFrame } from '@/components/ui';
 
@@ -153,7 +152,6 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Simulate API call

@@ -22,6 +22,12 @@ const defaultUser: User = {
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
+interface CustomerData {
+  name: string;
+  phone: string;
+  address: string;
+}
+
 interface QuotationStep {
   id: number;
   title: string;
@@ -34,11 +40,10 @@ export default function QuotationPage() {
   const [currentUser, setCurrentUser] = useState<User>(defaultUser);
   const [customerId, setCustomerId] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [isNewCustomer, setIsNewCustomer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customerExists, setCustomerExists] = useState<boolean | null>(null);
-  const [customerData, setCustomerData] = useState<any>(null);
+  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
 
   const steps: QuotationStep[] = [
@@ -88,7 +93,6 @@ export default function QuotationPage() {
     debounce(async (id: string) => {
       if (!id || id.trim() === '') {
         setIsLoading(false);
-        setIsNewCustomer(false);
         setCustomerExists(null);
         setCustomerData(null);
         setError(null);
@@ -114,17 +118,14 @@ export default function QuotationPage() {
         
         if (customer) {
           setCustomerExists(true);
-          setIsNewCustomer(false);
           setCustomerData(customer);
         } else {
           setCustomerExists(false);
-          setIsNewCustomer(true);
           setCustomerData(null);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('API call failed:', err);
         setError('Không thể kiểm tra mã khách hàng. Vui lòng thử lại.');
-        setIsNewCustomer(false);
         setCustomerExists(null);
       } finally {
         setIsLoading(false);
@@ -163,13 +164,12 @@ export default function QuotationPage() {
     setCurrentStep(1);
     setCustomerData(null);
     setCustomerExists(null);
-    setIsNewCustomer(false);
   };
 
   // Simple debounce function
-  function debounce(func: Function, wait: number) {
+  function debounce<T extends unknown[]>(func: (...args: T) => void, wait: number) {
     let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: any[]) {
+    return function executedFunction(...args: T) {
       const later = () => {
         clearTimeout(timeout);
         func(...args);

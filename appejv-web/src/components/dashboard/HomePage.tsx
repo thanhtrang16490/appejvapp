@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { mockSectorService } from '@/services/mock-sector';
-import { Sector, Combo, User } from '@/types';
+import { Sector, User } from '@/types';
 import HomeHeader from './HomeHeader';
 import BrandSelector from './BrandSelector';
 import PromoBanners from './PromoBanners';

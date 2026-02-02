@@ -24,7 +24,6 @@ export default function HomeHeader({ user }: HomeHeaderProps) {
   };
 
   const isAgent = user?.role_id === 1 || user?.role_id === 2;
-  const isCustomer = user?.role_id === 3;
   const isPublic = user?.role_id === 4;
 
   return (

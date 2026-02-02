@@ -54,7 +54,7 @@ export default function PromoBanners() {
     };
 
     loadBanners();
-  }, []);
+  }, [mockBanners]);
 
   useEffect(() => {
     if (banners.length <= 1) return;

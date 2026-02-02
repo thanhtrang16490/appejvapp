@@ -55,7 +55,7 @@ export const API_ENDPOINTS = {
   },
 };
 
-export const buildUrl = (endpoint: string, params?: Record<string, any>): string => {
+export const buildUrl = (endpoint: string, params?: Record<string, unknown>): string => {
   const url = new URL(`${API_CONFIG.BASE_URL}${endpoint}`);
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -67,24 +67,30 @@ export const buildUrl = (endpoint: string, params?: Record<string, any>): string
   return url.toString();
 };
 
-export const handleApiError = (error: any): { code: string; message: string; details?: any } => {
-  if (error.response) {
+export const handleApiError = (error: unknown): { code: string; message: string; details?: unknown } => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const errorResponse = error as { response: { status: number; data?: { message?: string } } };
     return {
-      code: error.response.status.toString(),
-      message: error.response.data?.message || 'An error occurred',
-      details: error.response.data,
+      code: errorResponse.response.status.toString(),
+      message: errorResponse.response.data?.message || 'An error occurred',
+      details: errorResponse.response.data,
     };
   }
+  const errorMessage = error && typeof error === 'object' && 'message' in error 
+    ? (error as { message: string }).message 
+    : 'An unexpected error occurred';
   return {
     code: '500',
-    message: error.message || 'An unexpected error occurred',
+    message: errorMessage,
     details: error,
   };
 };
 
-export default {
+const apiConfig = {
   API_CONFIG,
   API_ENDPOINTS,
   buildUrl,
   handleApiError,
 };
+
+export default apiConfig;

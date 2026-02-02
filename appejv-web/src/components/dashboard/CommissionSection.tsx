@@ -25,7 +25,6 @@ interface MonthlyCommission {
 export default function CommissionSection({ user }: CommissionSectionProps) {
   const [showCommission, setShowCommission] = useState(false);
   const [monthlyCommissions, setMonthlyCommissions] = useState<MonthlyCommission[]>([]);
-  const [loading, setLoading] = useState(false);
 
   // Mock commission data
   const mockCommissions: Commission[] = [

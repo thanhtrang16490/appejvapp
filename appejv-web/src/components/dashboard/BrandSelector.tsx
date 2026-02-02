@@ -7,10 +7,6 @@ interface BrandSelectorProps {
 }
 
 export default function BrandSelector({ sectors }: BrandSelectorProps) {
-  const handleBrandClick = (sectorId: number) => {
-    console.log('Navigate to brand:', sectorId);
-  };
-
   return (
     <div className="px-4">
       <div className="flex justify-between space-x-4">

@@ -80,15 +80,7 @@ export default function ContentGallery() {
     };
 
     loadContents();
-  }, []);
-
-  const handleContentClick = (contentId: number) => {
-    console.log('Navigate to content:', contentId);
-  };
-
-  const handleViewAll = () => {
-    console.log('Navigate to gallery');
-  };
+  }, [mockContents]);
 
   if (loading) {
     return (
