@@ -11,7 +11,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // Client for server components (only use in server components)
 export const createServerClient = () => {
   // This should only be called in server components
-  const { cookies } = require('next/headers')
+  const { cookies } = require('next/headers') // eslint-disable-line @typescript-eslint/no-require-imports
   return createServerComponentClient({ cookies })
 }
 

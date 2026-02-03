@@ -13,7 +13,7 @@ export default function ContentsPage() {
 
   useEffect(() => {
     fetchContents()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchContents = async () => {
     try {
@@ -48,7 +48,7 @@ export default function ContentsPage() {
       }
 
       // Transform data to match Content interface
-      const transformedContents: Content[] = contentsData.map(content => ({
+      const transformedContents: Content[] = (contentsData || []).map((content: any) => ({
         id: content.id,
         title: content.title,
         content: content.content,

@@ -13,7 +13,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProducts = async () => {
     try {
@@ -49,7 +49,7 @@ export default function ProductsPage() {
       }
 
       // Transform data to match Product interface
-      const transformedProducts: Product[] = productsData.map(product => ({
+      const transformedProducts: Product[] = (productsData || []).map((product: any) => ({
         id: product.id,
         name: product.name,
         description: product.description,

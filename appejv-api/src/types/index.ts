@@ -56,13 +56,29 @@ export interface Content {
 }
 
 // Dashboard Types
+export interface RecentUser {
+  id: string
+  email: string
+  name: string
+  created_at: string
+  roles?: { name: string }[]
+}
+
+export interface RecentProduct {
+  id: number
+  name: string
+  price: number
+  created_at: string
+  sectors?: { name: string }[]
+}
+
 export interface DashboardStats {
   totalUsers: number
   totalProducts: number
   totalSectors: number
   totalContents: number
-  recentUsers: User[]
-  recentProducts: Product[]
+  recentUsers: RecentUser[]
+  recentProducts: RecentProduct[]
 }
 
 // API Response Types
@@ -179,29 +195,4 @@ export interface Notification {
   type: 'info' | 'success' | 'warning' | 'error'
   read: boolean
   created_at: string
-}
-
-// Export all types
-export type {
-  User,
-  Role,
-  Sector,
-  Product,
-  Content,
-  DashboardStats,
-  ApiResponse,
-  PaginatedResponse,
-  UserFormData,
-  ProductFormData,
-  SectorFormData,
-  ContentFormData,
-  ChartData,
-  TimeSeriesData,
-  UserFilters,
-  ProductFilters,
-  ContentFilters,
-  AuthUser,
-  LoginCredentials,
-  SystemSettings,
-  Notification
 }

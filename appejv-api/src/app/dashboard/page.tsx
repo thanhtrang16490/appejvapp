@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Users, Package, Building2, FileText, TrendingUp, TrendingDown } from 'lucide-react'
 import { createBrowserClient } from '@/lib/supabase'
-import { DashboardStats } from '@/types'
+import { DashboardStats, RecentUser, RecentProduct } from '@/types'
 
 const StatCard = ({ 
   title, 
@@ -14,7 +14,7 @@ const StatCard = ({
 }: { 
   title: string
   value: number
-  icon: any
+  icon: React.ComponentType<{ className?: string }>
   trend?: 'up' | 'down'
   trendValue?: string
 }) => (
@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardStats()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchDashboardStats = async () => {
     try {
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {stats?.recentUsers && stats.recentUsers.length > 0 ? (
-              stats.recentUsers.map((user: any) => (
+              stats.recentUsers.map((user: RecentUser) => (
                 <div key={user.id} className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <Users className="w-5 h-5 text-green-600" />
@@ -177,7 +177,7 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{user.name}</p>
                     <p className="text-xs text-gray-500">{user.email}</p>
-                    <p className="text-xs text-gray-400">{user.roles?.name}</p>
+                    <p className="text-xs text-gray-400">{user.roles?.[0]?.name}</p>
                   </div>
                   <span className="text-xs text-gray-400">
                     {new Date(user.created_at).toLocaleDateString('vi-VN')}
@@ -203,14 +203,14 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {stats?.recentProducts && stats.recentProducts.length > 0 ? (
-              stats.recentProducts.map((product: any) => (
+              stats.recentProducts.map((product: RecentProduct) => (
                 <div key={product.id} className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
                     <Package className="w-5 h-5 text-primary-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900 line-clamp-1">{product.name}</p>
-                    <p className="text-xs text-gray-500">{product.sectors?.name}</p>
+                    <p className="text-xs text-gray-500">{product.sectors?.[0]?.name}</p>
                     <p className="text-xs text-gray-400">
                       {new Intl.NumberFormat('vi-VN', {
                         style: 'currency',

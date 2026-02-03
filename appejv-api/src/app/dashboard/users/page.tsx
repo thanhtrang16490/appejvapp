@@ -13,7 +13,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchUsers = async () => {
     try {
@@ -51,7 +51,7 @@ export default function UsersPage() {
       }
 
       // Transform data to match User interface
-      const transformedUsers: User[] = usersData.map(user => ({
+      const transformedUsers: User[] = (usersData || []).map((user: any) => ({
         id: user.id,
         email: user.email,
         name: user.name,
@@ -99,7 +99,7 @@ export default function UsersPage() {
     }
   }
 
-  const formatCurrency = (amount: number | null) => {
+  const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return '-'
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',

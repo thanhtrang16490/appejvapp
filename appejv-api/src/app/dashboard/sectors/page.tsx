@@ -13,7 +13,7 @@ export default function SectorsPage() {
 
   useEffect(() => {
     fetchSectors()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchSectors = async () => {
     try {
