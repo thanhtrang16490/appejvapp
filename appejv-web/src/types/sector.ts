@@ -41,8 +41,10 @@ export interface Sector {
   name: string;
   description: string | null;
   image: string | null;
-  list_combos?: Combo[];
-  list_contents?: Content[];
+  products?: Product[];
+  contents?: Content[];
+  list_combos?: Combo[]; // Keep for backward compatibility
+  list_contents?: Content[]; // Keep for backward compatibility
   created_at: string;
   updated_at: string;
 }

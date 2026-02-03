@@ -1,34 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { User } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { AvatarFrame } from '@/components/ui';
 
-// Default user
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
-
 export default function ProfilePage() {
-  const [currentUser] = useState<User>(defaultUser);
+  const { authState, logout, updateUser } = useAuth();
+  const toast = useToast();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  
+  const currentUser = authState.user;
   const [editForm, setEditForm] = useState({
-    email: currentUser.email,
-    address: currentUser.address || '',
-    phone: currentUser.phone,
-    name: currentUser.name,
+    email: currentUser?.email || '',
+    address: currentUser?.address || '',
+    phone: currentUser?.phone || '',
+    name: currentUser?.name || '',
   });
 
   const formatPhoneNumber = (phoneNumber: string): string => {
@@ -38,38 +28,44 @@ export default function ProfilePage() {
     return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
   };
 
-  const handleLogout = () => {
-    if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?')) {
-      localStorage.removeItem('appejv_user');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Đăng xuất thành công');
       window.location.href = '/login';
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi đăng xuất');
     }
   };
 
-  const handleSaveProfile = () => {
-    // Update user data in localStorage for demo purposes
-    const updatedUser = {
-      ...currentUser,
-      ...editForm,
-    };
-    localStorage.setItem('appejv_user', JSON.stringify(updatedUser));
-    setShowEditModal(false);
-    alert('Thông tin đã được cập nhật');
+  const handleSaveProfile = async () => {
+    try {
+      const updatedUser = await updateUser(editForm);
+      if (updatedUser) {
+        setShowEditModal(false);
+        toast.success('Thông tin đã được cập nhật thành công');
+      } else {
+        toast.error('Không thể cập nhật thông tin');
+      }
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi cập nhật thông tin');
+    }
   };
 
   const handleSupportCall = () => {
-    const companyInfo = `CÔNG TY CỔ PHẦN APPE JV VIỆT NAM
-
-Địa chỉ: Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam
-Điện thoại: 03513 595 030
-Fax: 03513 835 990
-Website: www.appe.vn
-
-Bạn có muốn gọi điện thoại không?`;
-    
-    if (confirm(companyInfo)) {
-      window.open('tel:03513595030', '_self');
-    }
+    setShowSupportModal(true);
   };
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải thông tin...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -122,7 +118,15 @@ Bạn có muốn gọi điện thoại không?`;
           <div className="flex justify-between items-center px-4 py-2 border-b border-gray-100">
             <h2 className="text-xs font-bold text-gray-500">TÀI KHOẢN</h2>
             <button
-              onClick={() => setShowEditModal(true)}
+              onClick={() => {
+                setEditForm({
+                  email: currentUser?.email || '',
+                  address: currentUser?.address || '',
+                  phone: currentUser?.phone || '',
+                  name: currentUser?.name || '',
+                });
+                setShowEditModal(true);
+              }}
               className="text-xs font-bold text-red-600"
             >
               YÊU CẦU THAY ĐỔI
@@ -251,7 +255,7 @@ Bạn có muốn gọi điện thoại không?`;
             </button>
 
             <button 
-              onClick={handleLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className="w-full flex items-center p-3 bg-gray-500 hover:bg-gray-600"
             >
               <div className="flex items-center">
@@ -351,6 +355,88 @@ Bạn có muốn gọi điện thoại không?`;
               >
                 Lưu
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-sm">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                Xác nhận đăng xuất
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Support Contact Modal */}
+      {showSupportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full">
+                <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-4">
+                Liên hệ hỗ trợ
+              </h3>
+              <div className="space-y-3 mb-6">
+                <div className="text-center">
+                  <p className="font-semibold text-gray-900">CÔNG TY CỔ PHẦN APPE JV VIỆT NAM</p>
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p><span className="font-medium">Địa chỉ:</span> Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam</p>
+                  <p><span className="font-medium">Điện thoại:</span> 03513 595 030</p>
+                  <p><span className="font-medium">Fax:</span> 03513 835 990</p>
+                  <p><span className="font-medium">Website:</span> www.appe.vn</p>
+                </div>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowSupportModal(false)}
+                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSupportModal(false);
+                    window.open('tel:03513595030', '_self');
+                    toast.info('Đang thực hiện cuộc gọi...');
+                  }}
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Gọi ngay
+                </button>
+              </div>
             </div>
           </div>
         </div>

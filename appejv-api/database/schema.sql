@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
+    password VARCHAR(255),
     role_id INTEGER NOT NULL REFERENCES roles(id),
     parent_id UUID REFERENCES users(id),
     commission_rate DECIMAL(5,2),
@@ -147,8 +148,14 @@ INSERT INTO contents (title, content, brand, category, sector_id) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert sample admin user (password should be hashed in real implementation)
-INSERT INTO users (email, name, phone, role_id, address) VALUES
-    ('admin@appejv.vn', 'Admin User', '03513595030', 1, 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam')
+INSERT INTO users (email, name, phone, role_id, password, address) VALUES
+    ('admin@appejv.vn', 'Admin User', '03513595030', 1, '123456', 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam')
+ON CONFLICT (email) DO NOTHING;
+
+-- Insert additional test users
+INSERT INTO users (email, name, phone, role_id, password, commission_rate, total_commission, address) VALUES
+    ('agent@appejv.vn', 'Nguyễn Văn A', '0987654321', 2, '123456', 5.0, 500000, 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam'),
+    ('customer@appejv.vn', 'Trần Thị B', '0111222333', 3, '123456', NULL, NULL, 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam')
 ON CONFLICT (email) DO NOTHING;
 
 -- Row Level Security (RLS) policies

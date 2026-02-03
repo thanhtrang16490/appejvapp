@@ -1,13 +1,19 @@
 'use client';
 
 import { User } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import { AvatarFrame } from '@/components/ui';
+import { LogOut } from 'lucide-react';
 
 interface HomeHeaderProps {
   user: User | null;
 }
 
 export default function HomeHeader({ user }: HomeHeaderProps) {
+  const { logout } = useAuth();
+  const toast = useToast();
+
   const formatPhone = (phone: string) => {
     // Format phone as xxx xxx xxx (matching mobile app)
     const cleaned = phone.replace(/\D/g, '');
@@ -22,6 +28,16 @@ export default function HomeHeader({ user }: HomeHeaderProps) {
     return new Intl.NumberFormat('vi-VN', {
       maximumFractionDigits: 0,
     }).format(roundedAmount);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Redirect will be handled by middleware
+      window.location.href = '/login';
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi đăng xuất');
+    }
   };
 
   const isAgent = user?.role_id === 1 || user?.role_id === 2;
@@ -73,16 +89,25 @@ export default function HomeHeader({ user }: HomeHeaderProps) {
               </button>
             )}
             {!isPublic && (
-              <button 
-                onClick={() => window.location.href = '/notifications'}
-                className="bg-black bg-opacity-20 rounded-full p-2 hover:bg-opacity-30"
-              >
-                <img
-                  src="/images/bell.png"
-                  alt="Thông báo"
-                  className="w-6 h-6"
-                />
-              </button>
+              <>
+                <button 
+                  onClick={() => window.location.href = '/notifications'}
+                  className="bg-black bg-opacity-20 rounded-full p-2 hover:bg-opacity-30"
+                >
+                  <img
+                    src="/images/bell.png"
+                    alt="Thông báo"
+                    className="w-6 h-6"
+                  />
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="bg-black bg-opacity-20 rounded-full p-2 hover:bg-opacity-30 transition-all"
+                  title="Đăng xuất"
+                >
+                  <LogOut className="w-5 h-5 text-white" />
+                </button>
+              </>
             )}
           </div>
         </div>

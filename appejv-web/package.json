@@ -10,10 +10,14 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.6",
     "axios": "^1.8.4",
+    "js-cookie": "^3.0.5",
+    "lucide-react": "^0.563.0",
     "next": "14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^6.28.0",
     "zustand": "^5.0.3"
   },

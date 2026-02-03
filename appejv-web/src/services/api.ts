@@ -92,7 +92,7 @@ const apiClient = new ApiClient();
 export const sectorService = {
   async getAllSectors() {
     try {
-      const response = await apiClient.get(API_ENDPOINTS.SECTORS.LIST);
+      const response = await apiClient.get(API_ENDPOINTS.SECTORS.LIST, { include_products: 'true' });
       return response;
     } catch (error) {
       console.error('Error fetching sectors:', error);

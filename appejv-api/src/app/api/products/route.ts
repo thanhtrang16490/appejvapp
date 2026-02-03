@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient()
     const { searchParams } = new URL(request.url)
     
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limit = parseInt(searchParams.get('limit') || '100') // Increase default limit to 100
     const search = searchParams.get('search') || ''
     const sector_id = searchParams.get('sector_id') || ''
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('products')
       .select(`
         *,
@@ -35,11 +34,12 @@ export async function GET(request: NextRequest) {
     const { data: products, error, count } = await query
 
     if (error) {
+      console.error('Products API error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({
-      data: products,
+      data: products || [],
       pagination: {
         page,
         limit,
@@ -48,27 +48,29 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
+    console.error('Products API catch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
     const body = await request.json()
 
-    const { data: product, error } = await supabase
+    const { data: product, error } = await supabaseAdmin
       .from('products')
       .insert([body])
       .select()
       .single()
 
     if (error) {
+      console.error('Product creation error:', error)
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ data: product }, { status: 201 })
   } catch (error) {
+    console.error('Product creation catch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

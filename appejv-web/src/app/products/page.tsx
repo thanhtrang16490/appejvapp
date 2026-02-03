@@ -1,27 +1,13 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { User, Combo } from '@/types';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/useToast';
+import { Combo } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PlaceholderFrame } from '@/components/ui';
 import { mockSectorService } from '@/services/mock-sector';
 import { products as productService } from '@/services';
-
-// Default user - Admin
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
 
 interface ProductCategory {
   id: string;
@@ -52,26 +38,57 @@ const productCategories: ProductCategory[] = [
 ];
 
 export default function ProductsPage() {
-  const [currentUser] = useState<User>(defaultUser);
+  const { authState } = useAuth();
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [allProducts, setAllProducts] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
+
+  const currentUser = authState.user;
 
   useEffect(() => {
+    // Prevent multiple loads
+    if (hasLoadedRef.current) return;
+    
     // Load real product data from APPE JV sectors
     const loadData = async () => {
+      hasLoadedRef.current = true;
       try {
-        const allCombos = await productService.getAllProducts();
-        setAllProducts(allCombos as Combo[]);
+        const allCombos = await productService.getAllProducts({ limit: 1000 }); // Request up to 1000 products
+        // Handle API response format and ensure it's an array
+        let productsArray: Combo[] = [];
+        
+        if (Array.isArray(allCombos)) {
+          productsArray = allCombos;
+        } else if (allCombos && typeof allCombos === 'object' && 'data' in allCombos) {
+          // Handle API response with data wrapper
+          const responseData = (allCombos as any).data;
+          productsArray = Array.isArray(responseData) ? responseData : [];
+        } else {
+          productsArray = [];
+        }
+        
+        setAllProducts(productsArray);
+        
+        if (productsArray.length > 0) {
+          toast.success(`Đã tải ${productsArray.length} sản phẩm thành công`);
+        } else {
+          toast.info('Không có sản phẩm nào được tìm thấy');
+        }
       } catch (error) {
         console.error('Error loading data:', error);
+        toast.warning('Không thể tải dữ liệu từ server, sử dụng dữ liệu mẫu');
         // Fallback to mock data if API fails
         try {
           const fallbackCombos = await mockSectorService.getAllCombos();
           setAllProducts(fallbackCombos);
+          toast.info(`Đã tải ${fallbackCombos.length} sản phẩm từ dữ liệu mẫu`);
         } catch (fallbackError) {
           console.error('Fallback error:', fallbackError);
+          toast.error('Không thể tải dữ liệu sản phẩm');
+          setAllProducts([]);
         }
       } finally {
         setLoading(false);
@@ -79,7 +96,7 @@ export default function ProductsPage() {
     };
 
     loadData();
-  }, []);
+  }, []); // Remove toast dependency to prevent loops
 
   // Filter products based on search query and category
   const filteredProducts = useMemo(() => {

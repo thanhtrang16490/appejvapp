@@ -6,7 +6,7 @@ export const API_CONFIG = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   },
-  USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK === 'false', // Changed to false to use real API by default
+  USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK === 'true', // Use mock when explicitly set to true
 };
 
 // API Endpoints

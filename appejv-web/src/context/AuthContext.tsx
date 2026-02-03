@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import Cookies from 'js-cookie';
+import { toast } from 'react-hot-toast';
 import { User, LoginCredentials, AuthState } from '@/types';
 import { mockAuthService } from '@/services/mock-auth';
 import { auth as authService } from '@/services';
@@ -34,10 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const isAuthenticated = await mockAuthService.isAuthenticated();
-        if (isAuthenticated) {
-          const user = await mockAuthService.getCurrentUser();
-          setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
+        // Check for authentication token and user data in cookies
+        const authToken = Cookies.get('auth-token');
+        const userDataStr = Cookies.get('user-data');
+        
+        if (authToken && userDataStr) {
+          try {
+            const user = JSON.parse(userDataStr) as User;
+            setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
+          } catch (parseError) {
+            // If parsing fails, clear cookies and set unauthenticated state
+            Cookies.remove('auth-token');
+            Cookies.remove('user-data');
+            setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+          }
         } else {
           setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
         }
@@ -53,7 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await authService.login(credentials);
       if (user) {
-        await mockAuthService.storeUserData(user); // Keep using mock for storage
+        // Store user data and auth token in cookies
+        Cookies.set('auth-token', `token-${user.id}`, { expires: 7, secure: true, sameSite: 'strict' });
+        Cookies.set('user-data', JSON.stringify(user), { expires: 7, secure: true, sameSite: 'strict' });
         setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
         return user;
       }
@@ -64,7 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const user = await mockAuthService.login(credentials);
         if (user) {
-          await mockAuthService.storeUserData(user);
+          // Store user data and auth token in cookies
+          Cookies.set('auth-token', `token-${user.id}`, { expires: 7, secure: true, sameSite: 'strict' });
+          Cookies.set('user-data', JSON.stringify(user), { expires: 7, secure: true, sameSite: 'strict' });
           setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
           return user;
         }
@@ -79,21 +95,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async (): Promise<void> => {
     try {
       await authService.logout();
+      // Clear cookies
+      Cookies.remove('auth-token');
+      Cookies.remove('user-data');
       setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+      toast.success('Đăng xuất thành công');
     } catch {
       // Fallback to mock service
       try {
         await mockAuthService.logout();
+        // Clear cookies
+        Cookies.remove('auth-token');
+        Cookies.remove('user-data');
         setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+        toast.success('Đăng xuất thành công');
       } catch (fallbackError) {
         console.error('Fallback logout error:', fallbackError);
-        setAuthState(prev => ({ ...prev, error: 'Logout failed' }));
+        // Still clear cookies even if logout fails
+        Cookies.remove('auth-token');
+        Cookies.remove('user-data');
+        setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+        toast.error('Có lỗi xảy ra khi đăng xuất');
       }
     }
   };
 
   const getUser = async (): Promise<User | null> => {
     try {
+      // First try to get from cookies
+      const userDataStr = Cookies.get('user-data');
+      if (userDataStr) {
+        return JSON.parse(userDataStr) as User;
+      }
+      
+      // Fallback to service
       return await authService.getCurrentUser();
     } catch {
       // Fallback to mock service
@@ -110,11 +145,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const updatedUser = await mockAuthService.updateUserProfile(userInfo);
       if (updatedUser) {
+        // Update cookies with new user data
+        Cookies.set('user-data', JSON.stringify(updatedUser), { expires: 7, secure: true, sameSite: 'strict' });
         setAuthState(prev => ({ ...prev, user: updatedUser }));
+        toast.success('Cập nhật thông tin thành công');
         return updatedUser;
       }
+      toast.error('Không thể cập nhật thông tin');
       return null;
     } catch {
+      toast.error('Có lỗi xảy ra khi cập nhật thông tin');
       return null;
     }
   };

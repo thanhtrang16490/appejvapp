@@ -21,7 +21,7 @@ export default function ProductSection({ sector }: ProductSectionProps) {
     return null;
   };
 
-  if (!sector.list_combos || sector.list_combos.length === 0) {
+  if (!sector.products || sector.products.length === 0) {
     return null;
   }
 
@@ -48,19 +48,18 @@ export default function ProductSection({ sector }: ProductSectionProps) {
       {/* Products horizontal scroll */}
       <div className="overflow-x-auto">
         <div className="flex space-x-4 px-4 pb-4">
-          {sector.list_combos.map((combo) => (
+          {sector.products.map((product) => (
             <div
-              key={combo.id}
-              onClick={() => window.location.href = `/product/${combo.id}`}
+              key={product.id}
+              onClick={() => window.location.href = `/product/${product.id}`}
               className="flex-shrink-0 w-32 bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
-              style={{ aspectRatio: '10/17' }}
             >
               {/* Product image */}
-              <div className="relative w-full" style={{ aspectRatio: '1/1' }}>
+              <div className="relative w-full h-32">
                 <PlaceholderFrame 
                   text="replace holder"
                   className="w-full h-full rounded-none"
-                  aspectRatio="1/1"
+                  aspectRatio="none"
                   textSize="xs"
                 />
                 {/* Tag */}
@@ -74,12 +73,12 @@ export default function ProductSection({ sector }: ProductSectionProps) {
               </div>
 
               {/* Product info */}
-              <div className="p-3 flex-1 flex flex-col">
-                <h4 className="text-sm font-bold text-gray-900 mb-2 line-clamp-3 flex-1">
-                  {combo.name}
+              <div className="p-3">
+                <h4 className="text-sm font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem]">
+                  {product.name}
                 </h4>
-                <p className="text-base font-bold text-red-600">
-                  {formatCurrency(combo.price)}
+                <p className="text-sm font-bold text-red-600">
+                  {formatCurrency(product.price)}
                 </p>
               </div>
             </div>

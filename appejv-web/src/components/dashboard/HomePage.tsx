@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { mockSectorService } from '@/services/mock-sector';
 import { sectors as sectorService } from '@/services';
-import { Sector, User } from '@/types';
+import { Sector } from '@/types';
 import HomeHeader from './HomeHeader';
 import BrandSelector from './BrandSelector';
 import PromoBanners from './PromoBanners';
@@ -11,40 +12,39 @@ import ProductSection from './ProductSection';
 import ContentGallery from './ContentGallery';
 import BottomNavigation from '../layout/BottomNavigation';
 
-// Default mock user data - Admin user
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
-
 export default function HomePage() {
+  const { authState } = useAuth();
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser] = useState<User>(defaultUser);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const sectorsData = await sectorService.getAllSectors();
-        setSectors(sectorsData as Sector[]);
+        // Handle API response format: { data: [...] }
+        let sectorsArray: Sector[] = [];
+        
+        if (Array.isArray(sectorsData)) {
+          sectorsArray = sectorsData;
+        } else if (sectorsData && typeof sectorsData === 'object' && 'data' in sectorsData) {
+          const responseData = (sectorsData as any).data;
+          sectorsArray = Array.isArray(responseData) ? responseData : [];
+        } else {
+          sectorsArray = [];
+        }
+        
+        setSectors(sectorsArray);
+        console.log('Loaded sectors:', sectorsArray.length);
       } catch (error) {
         console.error('Error loading home data:', error);
         // Fallback to mock data if API fails
         try {
           const fallbackSectors = await mockSectorService.getAllSectors();
           setSectors(fallbackSectors);
+          console.log('Loaded fallback sectors:', fallbackSectors.length);
         } catch (fallbackError) {
           console.error('Fallback error:', fallbackError);
+          setSectors([]); // Set empty array as final fallback
         }
       } finally {
         setLoading(false);
@@ -54,7 +54,7 @@ export default function HomePage() {
     loadData();
   }, []);
 
-  if (loading) {
+  if (authState.isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">
@@ -65,6 +65,7 @@ export default function HomePage() {
     );
   }
 
+  const currentUser = authState.user;
   const isCustomer = currentUser?.role_id === 3;
   const isPublic = currentUser?.role_id === 4;
 
@@ -89,7 +90,7 @@ export default function HomePage() {
         )}
 
         {/* Brand Selector - Hidden for customers and public users */}
-        {!isCustomer && !isPublic && (
+        {!isCustomer && !isPublic && Array.isArray(sectors) && sectors.length > 0 && (
           <div className="py-4">
             <BrandSelector sectors={sectors} />
           </div>
@@ -101,7 +102,7 @@ export default function HomePage() {
         </div>
 
         {/* Product Sections - Hidden for customers */}
-        {!isCustomer && (
+        {!isCustomer && Array.isArray(sectors) && sectors.length > 0 && (
           <div className="py-4">
             <div className="px-4 mb-6">
               <h2 className="text-3xl font-bold text-gray-900">Bán chạy</h2>

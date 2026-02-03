@@ -2,336 +2,198 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/useToast';
+import { Eye, EyeOff, Phone, Lock, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showUserNotFoundModal, setShowUserNotFoundModal] = useState(false);
-  const [showWrongPasswordModal, setShowWrongPasswordModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { login } = useAuth();
+  const router = useRouter();
+  const toast = useToast();
 
-  // Mock users data (same as mobile app)
-  const mockUsers = [
-    {
-      id: 1,
-      phone: '0123456789',
-      password: 'appejv123',
-      name: 'Admin User',
-      role_id: 1,
-    },
-    {
-      id: 2,
-      phone: '0987654321',
-      password: 'appejv123',
-      name: 'Nguyễn Văn A',
-      role_id: 2,
-    },
-    {
-      id: 3,
-      phone: '0901234567',
-      password: 'appejv123',
-      name: 'Trần Thị B',
-      role_id: 3,
-    },
-  ];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-  const handleLogin = async () => {
-    if (!phoneNumber || !password) {
-      alert('Vui lòng nhập số điện thoại và mật khẩu');
+    if (!phone || !password) {
+      setError('Vui lòng nhập đầy đủ thông tin');
+      toast.error('Vui lòng nhập đầy đủ thông tin');
+      setLoading(false);
       return;
     }
 
-    // Validate phone number format
-    const phoneRegex = /^[0-9\s]{10,11}$/;
-    if (!phoneRegex.test(phoneNumber)) {
-      alert('Số điện thoại không hợp lệ');
-      return;
-    }
-
-    setIsLoading(true);
+    const loadingToast = toast.loading('Đang đăng nhập...');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Normalize phone number for search
-      const normalizedPhone = phoneNumber.replace(/\s+/g, '').trim();
-
-      // Find matching user
-      const user = mockUsers.find(u => {
-        const userPhone = u.phone.replace(/\s+/g, '').trim();
-        return userPhone === normalizedPhone && u.password === password;
-      });
-
+      const user = await login({ phone, password });
       if (user) {
-        // Login successful
-        console.log(`Đăng nhập thành công với tài khoản: ${user.name}`);
-        // Store user data in localStorage
-        localStorage.setItem('appejv_user', JSON.stringify(user));
-        router.push('/');
+        toast.dismiss(loadingToast);
+        toast.success(`Chào mừng ${user.name}! Đăng nhập thành công.`);
+        
+        // Redirect based on user role
+        setTimeout(() => {
+          if (user.role?.name === 'admin') {
+            router.push('/');
+          } else if (user.role?.name === 'agent') {
+            router.push('/');
+          } else if (user.role?.name === 'customer') {
+            router.push('/');
+          } else {
+            router.push('/');
+          }
+        }, 1000);
       } else {
-        // Check if phone number exists
-        const phoneExists = mockUsers.some(u => {
-          const userPhone = u.phone.replace(/\s+/g, '').trim();
-          return userPhone === normalizedPhone;
-        });
-
-        if (phoneExists) {
-          // Phone exists but wrong password
-          setShowWrongPasswordModal(true);
-        } else {
-          // Phone doesn't exist
-          setShowUserNotFoundModal(true);
-        }
+        toast.dismiss(loadingToast);
+        setError('Số điện thoại hoặc mật khẩu không đúng');
+        toast.error('Số điện thoại hoặc mật khẩu không đúng');
       }
-    } catch (error) {
-      console.error('Lỗi khi đăng nhập:', error);
-      alert('Có lỗi xảy ra khi đăng nhập. Vui lòng thử lại sau.');
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      setError('Đăng nhập thất bại. Vui lòng thử lại.');
+      toast.error('Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSupportCall = () => {
-    const companyInfo = `CÔNG TY CỔ PHẦN APPE JV VIỆT NAM
+  // Demo accounts for testing
+  const demoAccounts = [
+    { phone: '0123456789', password: '123456', role: 'Admin', name: 'Admin User' },
+    { phone: '0987654321', password: '123456', role: 'Agent', name: 'Agent User' },
+    { phone: '0111222333', password: '123456', role: 'Customer', name: 'Customer User' },
+  ];
 
-Địa chỉ: Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam
-Điện thoại: 03513 595 030
-Fax: 03513 835 990
-Website: www.appe.vn
-
-Bạn có muốn gọi điện thoại không?`;
-    
-    if (confirm(companyInfo)) {
-      window.open('tel:03513595030', '_self');
-    }
-  };
-
-  const handleViewWithoutLogin = () => {
-    router.push('/gallery');
+  const handleDemoLogin = (account: { phone: string; password: string; name: string }) => {
+    setPhone(account.phone);
+    setPassword(account.password);
+    toast.info(`Đã điền thông tin cho tài khoản ${account.name}`);
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat"
-      style={{
-        backgroundImage: "url('/images/replace-holder.png')",
-        backgroundColor: '#1a1a2e'
-      }}
-    >
-      {/* Background overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-60"></div>
-      
-      {/* Login Form */}
-      <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-black bg-opacity-60 rounded-lg p-6">
-          <h2 className="text-xl font-bold text-white mb-6 text-left">
-            Chào mừng đến với Appejv
-          </h2>
-
-          {/* Phone Number Input */}
-          <div className="mb-4">
-            <div className="relative flex items-center bg-white rounded-md">
-              <div className="p-3">
-                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <input
-                type="tel"
-                placeholder="Số điện thoại"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="flex-1 p-3 pl-0 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
-              />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        {/* Logo and Title */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <span className="text-2xl font-bold text-white">A</span>
           </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">APPE JV Vietnam</h1>
+          <p className="text-gray-600">Đăng nhập để tiếp tục</p>
+        </div>
 
-          {/* Password Input */}
-          <div className="mb-6">
-            <div className="relative flex items-center bg-white rounded-md">
-              <div className="p-3">
-                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+        {/* Login Form */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
               </div>
-              <input
-                type={isPasswordVisible ? 'text' : 'password'}
-                placeholder="••••••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="flex-1 p-3 pl-0 bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                className="p-3"
-              >
-                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isPasswordVisible ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          </div>
+            )}
 
-          {/* Login Button Row */}
-          <div className="flex space-x-3 mb-4">
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Số điện thoại <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  placeholder="0123456789"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Mật khẩu <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  placeholder="••••••••"
+                  required
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
             <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="flex-1 bg-red-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? (
+              {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                  Đang đăng nhập...
                 </div>
               ) : (
                 'Đăng nhập'
               )}
             </button>
-            
-            <button
-              onClick={() => router.push('/')}
-              className="w-12 h-12 bg-white bg-opacity-20 rounded-md flex items-center justify-center hover:bg-opacity-30"
-            >
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-              </svg>
-            </button>
-          </div>
+          </form>
+        </div>
 
-          {/* Forgot Password */}
-          <div className="text-center mb-4">
-            <button
-              onClick={() => setShowWrongPasswordModal(true)}
-              className="text-gray-300 text-sm hover:text-white"
-            >
-              Quên mật khẩu?
-            </button>
+        {/* Demo Accounts */}
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Tài khoản demo</h3>
+          <div className="space-y-3">
+            {demoAccounts.map((account, index) => (
+              <button
+                key={index}
+                onClick={() => handleDemoLogin(account)}
+                className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={loading}
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-gray-900">{account.name}</p>
+                    <p className="text-sm text-gray-500">{account.phone}</p>
+                  </div>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                    {account.role}
+                  </span>
+                </div>
+              </button>
+            ))}
           </div>
-
-          {/* View Without Login */}
-          <div className="text-center">
-            <button
-              onClick={handleViewWithoutLogin}
-              className="text-gray-300 text-sm underline hover:text-white"
-            >
-              Xem không cần đăng nhập
-            </button>
-          </div>
+          <p className="text-xs text-gray-500 mt-4 text-center">
+            Nhấn vào tài khoản để tự động điền thông tin đăng nhập
+          </p>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-white text-xs">
-            © Appejv Agent được phát triển bởi Appejv Co., Ltd.
-          </p>
+        <div className="text-center mt-8 text-sm text-gray-600">
+          <p>© 2024 CÔNG TY CỔ PHẦN APPE JV VIỆT NAM</p>
         </div>
       </div>
-
-      {/* User Not Found Modal */}
-      {showUserNotFoundModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setShowUserNotFoundModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">
-              Tên đăng nhập không tồn tại
-            </h3>
-
-            <p className="text-gray-600 mb-6 text-left">
-              Vui lòng kiểm tra lại hoặc <span className="text-blue-600 font-semibold">Liên hệ Hỗ trợ</span> để{' '}
-              <span className="text-blue-600 font-semibold">Đăng ký tài khoản</span> mới.
-            </p>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={handleSupportCall}
-                className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-50"
-              >
-                Liên hệ Hỗ trợ
-              </button>
-              <button
-                onClick={() => setShowUserNotFoundModal(false)}
-                className="bg-red-600 text-white py-3 px-6 rounded-md hover:bg-red-700"
-              >
-                Thử lại
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Wrong Password Modal */}
-      {showWrongPasswordModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative">
-            <button
-              onClick={() => setShowWrongPasswordModal(false)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-            </div>
-
-            <h3 className="text-lg font-semibold text-gray-900 mb-3 text-left">
-              Mật khẩu không chính xác
-            </h3>
-
-            <p className="text-gray-600 mb-6 text-left">
-              Vui lòng kiểm tra lại hoặc liên hệ hỗ trợ nếu bạn không nhớ mật khẩu.
-            </p>
-
-            <div className="flex space-x-3">
-              <button
-                onClick={handleSupportCall}
-                className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-50"
-              >
-                Liên hệ Hỗ trợ
-              </button>
-              <button
-                onClick={() => {
-                  setShowWrongPasswordModal(false);
-                  setPassword('appejv123');
-                }}
-                className="bg-red-600 text-white py-3 px-6 rounded-md hover:bg-red-700"
-              >
-                Thử lại
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
