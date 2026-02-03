@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User } from '@/types';
+import { User, Combo } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 import { PlaceholderFrame } from '@/components/ui';
+import { mockSectorService } from '@/services/mock-sector';
 
 // Default user - Admin
 const defaultUser: User = {
@@ -19,16 +19,9 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
-
-interface ProductLine {
-  id: string;
-  name: string;
-  image: string;
-  productCount: number;
-}
 
 interface NewProduct {
   id: string;
@@ -37,29 +30,6 @@ interface NewProduct {
   buttonText: string;
   backgroundColor: string;
 }
-
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  tag?: string;
-}
-
-const productLines: ProductLine[] = [
-  {
-    id: '1',
-    name: 'Appe JV',
-    image: '',
-    productCount: 16,
-  },
-  {
-    id: '2',
-    name: 'RTD',
-    image: '',
-    productCount: 12,
-  },
-];
 
 const newProducts: NewProduct[] = [
   {
@@ -85,50 +55,32 @@ const newProducts: NewProduct[] = [
   },
 ];
 
-const bestSellingProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Thức ăn heo con CP59 (3-5kg)',
-    price: 18500,
-    image: '',
-    tag: 'BÁN CHẠY',
-  },
-  {
-    id: 2,
-    name: 'Thức ăn heo thịt CP59 (20-40kg)',
-    price: 16800,
-    image: '',
-    tag: 'MỚI',
-  },
-  {
-    id: 3,
-    name: 'Thức ăn heo nái mang thai CP59',
-    price: 17200,
-    image: '',
-    tag: 'CHẤT LƯỢNG',
-  },
-  {
-    id: 4,
-    name: 'Thức ăn heo hoàn thiện CP59',
-    price: 15900,
-    image: '',
-  },
-];
-
 export default function ProductsPage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeNewProductIndex, setActiveNewProductIndex] = useState(0);
+  const [bestSellingProducts, setBestSellingProducts] = useState<Combo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
+  useEffect(() => {
+    // Load real product data from APPE JV sectors
+    const loadProducts = async () => {
+      try {
+        const allCombos = await mockSectorService.getAllCombos();
+        // Get first 8 products for best selling section
+        setBestSellingProducts(allCombos.slice(0, 8));
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(amount);
+    return new Intl.NumberFormat('vi-VN').format(amount);
   };
 
   // Auto-scroll new products carousel
@@ -141,9 +93,6 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between p-4">
@@ -192,25 +141,18 @@ export default function ProductsPage() {
         {/* Brand Cards */}
         <div className="px-4 mb-6">
           <div className="flex space-x-4">
-            {productLines.map((line, index) => (
-              <button
-                key={line.id}
-                onClick={() => window.location.href = `/product/${line.id}`}
-                className={`flex-1 h-12 rounded-lg flex items-center justify-center shadow-sm transition-colors hover:opacity-80 ${
-                  index === 1 
-                    ? 'bg-yellow-400' 
-                    : index === 0 
-                    ? 'bg-green-500' 
-                    : 'bg-white'
-                }`}
-              >
-                <span className={`text-sm font-bold ${
-                  index === 1 || index === 0 ? 'text-white' : 'text-gray-700'
-                }`}>
-                  {line.name}
-                </span>
-              </button>
-            ))}
+            <button
+              onClick={() => window.location.href = '/'}
+              className="flex-1 h-12 rounded-lg flex items-center justify-center shadow-sm transition-colors hover:opacity-80 bg-green-500"
+            >
+              <span className="text-sm font-bold text-white">Appe JV</span>
+            </button>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="flex-1 h-12 rounded-lg flex items-center justify-center shadow-sm transition-colors hover:opacity-80 bg-yellow-400"
+            >
+              <span className="text-sm font-bold text-white">RTD</span>
+            </button>
           </div>
         </div>
 
@@ -275,99 +217,117 @@ export default function ProductsPage() {
         <div className="px-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Bán chạy</h2>
           
-          {/* Appe JV Section */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-bold text-gray-500 uppercase">Appe JV</span>
-              <button className="flex items-center text-red-600 hover:text-red-700">
-                <span className="text-sm font-medium mr-1">Tất cả</span>
-                <img
-                  src="/images/arrow-icon.png"
-                  alt="Arrow"
-                  className="w-5 h-5"
-                />
-              </button>
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
             </div>
-            
-            <div className="flex space-x-4 overflow-x-auto pb-4">
-              {bestSellingProducts.slice(0, 2).map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() => window.location.href = `/product/${product.id}`}
-                  className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative">
-                    <PlaceholderFrame 
-                      text="replace holder"
-                      className="w-full h-32 rounded-none"
-                      aspectRatio="none"
-                      textSize="xs"
+          ) : (
+            <>
+              {/* Thức ăn gia súc Section */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-bold text-gray-500 uppercase">Thức ăn gia súc</span>
+                  <button className="flex items-center text-red-600 hover:text-red-700">
+                    <span className="text-sm font-medium mr-1">Tất cả</span>
+                    <img
+                      src="/images/arrow-icon.png"
+                      alt="Arrow"
+                      className="w-5 h-5"
                     />
-                    {product.tag && (
-                      <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                        {product.tag}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                      {product.name}
-                    </h4>
-                    <p className="text-sm font-bold text-red-600">
-                      {formatCurrency(product.price)}
-                    </p>
-                  </div>
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
+                
+                <div className="flex space-x-4 overflow-x-auto pb-4">
+                  {bestSellingProducts.filter(product => product.sector_id === 1).slice(0, 4).map((product, index) => (
+                    <div
+                      key={product.id}
+                      onClick={() => window.location.href = `/product/${product.id}`}
+                      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                      <div className="relative">
+                        <PlaceholderFrame 
+                          text="replace holder"
+                          className="w-full h-32 rounded-none"
+                          aspectRatio="none"
+                          textSize="xs"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
+                            BÁN CHẠY
+                          </div>
+                        )}
+                        {index === 1 && (
+                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
+                            MỚI
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                          {product.name}
+                        </h4>
+                        <p className="text-sm font-bold text-red-600">
+                          {formatCurrency(product.price)} đ
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          {/* RTD Section */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-bold text-gray-500 uppercase">RTD</span>
-              <button className="flex items-center text-red-600 hover:text-red-700">
-                <span className="text-sm font-medium mr-1">Tất cả</span>
-                <img
-                  src="/images/arrow-icon.png"
-                  alt="Arrow"
-                  className="w-5 h-5"
-                />
-              </button>
-            </div>
-            
-            <div className="flex space-x-4 overflow-x-auto pb-4">
-              {bestSellingProducts.slice(2, 4).map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() => window.location.href = `/product/${product.id}`}
-                  className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                >
-                  <div className="relative">
-                    <PlaceholderFrame 
-                      text="replace holder"
-                      className="w-full h-32 rounded-none"
-                      aspectRatio="none"
-                      textSize="xs"
+              {/* Thức ăn gia cầm Section */}
+              <div className="mb-6">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-sm font-bold text-gray-500 uppercase">Thức ăn gia cầm</span>
+                  <button className="flex items-center text-red-600 hover:text-red-700">
+                    <span className="text-sm font-medium mr-1">Tất cả</span>
+                    <img
+                      src="/images/arrow-icon.png"
+                      alt="Arrow"
+                      className="w-5 h-5"
                     />
-                    {product.tag && (
-                      <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                        {product.tag}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                      {product.name}
-                    </h4>
-                    <p className="text-sm font-bold text-red-600">
-                      {formatCurrency(product.price)}
-                    </p>
-                  </div>
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
+                
+                <div className="flex space-x-4 overflow-x-auto pb-4">
+                  {bestSellingProducts.filter(product => product.sector_id === 2).slice(0, 4).map((product, index) => (
+                    <div
+                      key={product.id}
+                      onClick={() => window.location.href = `/product/${product.id}`}
+                      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                    >
+                      <div className="relative">
+                        <PlaceholderFrame 
+                          text="replace holder"
+                          className="w-full h-32 rounded-none"
+                          aspectRatio="none"
+                          textSize="xs"
+                        />
+                        {index === 0 && (
+                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
+                            CHẤT LƯỢNG
+                          </div>
+                        )}
+                        {index === 1 && (
+                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
+                            PHỔ BIẾN
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                          {product.name}
+                        </h4>
+                        <p className="text-sm font-bold text-red-600">
+                          {formatCurrency(product.price)} đ
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

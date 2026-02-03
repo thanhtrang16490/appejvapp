@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 
 // Default user
 const defaultUser: User = {
@@ -18,12 +17,12 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 export default function ProfilePage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
     email: currentUser.email,
@@ -31,16 +30,6 @@ export default function ProfilePage() {
     phone: currentUser.phone,
     name: currentUser.name,
   });
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-    setEditForm({
-      email: user.email,
-      address: user.address || '',
-      phone: user.phone,
-      name: user.name,
-    });
-  };
 
   const formatPhoneNumber = (phoneNumber: string): string => {
     if (!phoneNumber) return '';
@@ -64,26 +53,33 @@ export default function ProfilePage() {
   };
 
   const handleSaveProfile = () => {
-    // Update user data
+    // Update user data in localStorage for demo purposes
     const updatedUser = {
       ...currentUser,
       ...editForm,
     };
-    setCurrentUser(updatedUser);
     localStorage.setItem('appejv_user', JSON.stringify(updatedUser));
     setShowEditModal(false);
     alert('Thông tin đã được cập nhật');
   };
 
   const handleSupportCall = () => {
-    window.open('tel:0977879291', '_self');
+    const companyInfo = `CÔNG TY CỔ PHẦN APPE JV VIỆT NAM
+
+Địa chỉ: Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam
+Điện thoại: 03513 595 030
+Fax: 03513 835 990
+Website: www.appe.vn
+
+Bạn có muốn gọi điện thoại không?`;
+    
+    if (confirm(companyInfo)) {
+      window.open('tel:03513595030', '_self');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header with Background */}
       <div 
         className="relative h-72 bg-cover bg-center"

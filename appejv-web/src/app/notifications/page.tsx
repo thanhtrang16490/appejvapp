@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 
 // Default user
 const defaultUser: User = {
@@ -18,7 +17,7 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
@@ -164,14 +163,10 @@ const filterOptions: FilterOption[] = [
 ];
 
 export default function NotificationsPage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [filters, setFilters] = useState<FilterOption[]>(filterOptions);
   const [showFilterModal, setShowFilterModal] = useState(false);
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
 
   const toggleFilter = (filterId: string) => {
     setFilters(prev => prev.map(filter => 
@@ -210,9 +205,6 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between p-4">

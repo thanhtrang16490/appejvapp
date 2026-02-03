@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 import { PlaceholderFrame } from '@/components/ui';
 
 // Default user
@@ -19,7 +18,7 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
@@ -224,17 +223,13 @@ const stripHtmlTags = (html: string) => {
 };
 
 export default function GalleryPage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
   const [posts] = useState<Post[]>(mockPosts);
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({});
   const [showOptions, setShowOptions] = useState(false);
   const [loading] = useState(false);
   const sectors = mockSectors;
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
 
   const handleImageNavigation = (postId: number, direction: 'prev' | 'next') => {
     const post = posts.find(p => p.id === postId);
@@ -287,9 +282,6 @@ export default function GalleryPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700">
         <div className="flex items-center justify-center p-4">

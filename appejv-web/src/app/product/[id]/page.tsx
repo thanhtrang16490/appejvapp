@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { User } from '@/types';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
+import { User, Combo } from '@/types';
 import { PlaceholderFrame } from '@/components/ui';
+import { mockSectorService } from '@/services/mock-sector';
 
 // Default user
 const defaultUser: User = {
@@ -19,146 +19,25 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
-
-interface GroupedMerchandise {
-  pre_quote_merchandises: Array<{
-    quantity: number;
-  }>;
-  template: {
-    name: string;
-  };
-}
-
-interface Product {
-  id: number;
-  name: string;
-  total_price: number;
-  type?: string;
-  image?: string;
-  grouped_merchandises?: GroupedMerchandise[];
-}
-
-// Mock product data based on Vietnamese pig feed standards
-const mockProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Thức ăn heo con CP59 (3-5kg)',
-    total_price: 18500,
-    type: 'HEO_CON_3_5KG',
-    image: '',
-    grouped_merchandises: [
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Protein thô (CP): 20-22%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất béo thô: 4-6%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất xơ thô: tối đa 4%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Tro thô: tối đa 7%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Độ ẩm: tối đa 13%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Lysine: tối thiểu 1.2%' }
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Thức ăn heo thịt CP59 (20-40kg)',
-    total_price: 16800,
-    type: 'HEO_THIT_20_40KG',
-    image: '',
-    grouped_merchandises: [
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Protein thô (CP): 18-20%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất béo thô: 3-5%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất xơ thô: tối đa 5%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Tro thô: tối đa 7%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Độ ẩm: tối đa 13%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Lysine: tối thiểu 1.0%' }
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Thức ăn heo nái mang thai CP59',
-    total_price: 17200,
-    type: 'HEO_NAI_MANG_THAI',
-    image: '',
-    grouped_merchandises: [
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Protein thô (CP): 16-18%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất béo thô: 3-4%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Chất xơ thô: tối đa 6%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Canxi: 0.8-1.0%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Phosphor: 0.6-0.8%' }
-      },
-      {
-        pre_quote_merchandises: [{ quantity: 1 }],
-        template: { name: 'Acid folic: 2mg/kg' }
-      }
-    ]
-  }
-];
 
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = parseInt(params.id as string);
   
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
-  const [product, setProduct] = useState<Product | null>(null);
+  const [currentUser] = useState<User>(defaultUser);
+  const [product, setProduct] = useState<Combo | null>(null);
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
-    // Simulate API call
+    // Load real product data from APPE JV sectors
     const loadProduct = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const foundProduct = mockProducts.find(p => p.id === productId);
+        const allCombos = await mockSectorService.getAllCombos();
+        const foundProduct = allCombos.find(combo => combo.id === productId);
         setProduct(foundProduct || null);
       } catch (error) {
         console.error('Error loading product:', error);
@@ -170,25 +49,19 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [productId]);
 
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
+  const getProductCode = (description: string) => {
+    const match = description.match(/Mã SP: ([A-Z0-9-]+)/);
+    return match ? match[1] : '';
   };
 
-  const getTypeDisplay = (type?: string) => {
-    switch (type) {
-      case 'HEO_CON_3_5KG':
-        return 'HEO CON 3-5KG';
-      case 'HEO_THIT_20_40KG':
-        return 'HEO THỊT 20-40KG';
-      case 'HEO_NAI_MANG_THAI':
-        return 'HEO NÁI MANG THAI';
-      case 'HEO_NAI_NUOI_CON':
-        return 'HEO NÁI NUÔI CON';
-      case 'HEO_THIT_HOÀN_THIỆN':
-        return 'HEO THỊT HOÀN THIỆN';
-      default:
-        return 'THỨC ĂN HEO CP59';
-    }
+  const getProteinContent = (description: string) => {
+    const match = description.match(/Đạm (\d+(?:\.\d+)?)%/);
+    return match ? `${match[1]}%` : '';
+  };
+
+  const getBagSize = (description: string) => {
+    const match = description.match(/Bao (\d+)kg/);
+    return match ? `${match[1]}kg` : '';
   };
 
   const formatCurrency = (amount: number) => {
@@ -200,7 +73,7 @@ export default function ProductDetailPage() {
       try {
         await navigator.share({
           title: product.name,
-          text: `Xem sản phẩm: ${product.name} - Giá: ${formatCurrency(product.total_price)} đ`,
+          text: `Xem sản phẩm: ${product.name} - Giá: ${formatCurrency(product.price)} đ`,
           url: window.location.href,
         });
       } catch (error) {
@@ -209,7 +82,7 @@ export default function ProductDetailPage() {
     } else {
       // Fallback: copy to clipboard
       if (product) {
-        const shareText = `${product.name} - Giá: ${formatCurrency(product.total_price)} đ\n${window.location.href}`;
+        const shareText = `${product.name} - Giá: ${formatCurrency(product.price)} đ\n${window.location.href}`;
         await navigator.clipboard.writeText(shareText);
         alert('Đã copy thông tin sản phẩm vào clipboard');
       }
@@ -249,9 +122,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200 relative">
         <div className="flex items-center justify-between p-4">
@@ -332,12 +202,12 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           <p className="text-2xl font-bold text-red-600 mb-3">
-            {formatCurrency(product.total_price)} đ
+            {formatCurrency(product.price)} đ
           </p>
 
           <div className="py-3">
             <p className="text-sm text-gray-600 leading-relaxed">
-              Giá niêm yết cho 1kg thức ăn heo CP59. Sản phẩm được đóng bao 25kg, 50kg. 
+              {product.description}. Sản phẩm được đóng bao {getBagSize(product.description || '')}. 
               Phí vận chuyển và các chi phí khác (nếu có) sẽ được thông báo tới quý khách hàng. 
               Sản phẩm được bảo quản trong kho khô ráo, thoáng mát.
             </p>
@@ -364,34 +234,37 @@ export default function ProductDetailPage() {
               </div>
 
               <div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Loại</p>
-                <p className="text-sm text-gray-900">{getTypeDisplay(product.type)}</p>
+                <p className="text-sm font-bold text-gray-900 mb-1">Mã sản phẩm</p>
+                <p className="text-sm text-gray-900">{getProductCode(product.description || '')}</p>
               </div>
 
               <div>
-                <p className="text-sm font-bold text-gray-900 mb-1">Thành phần dinh dưỡng chính</p>
-                <div className="space-y-1">
-                  {product.grouped_merchandises?.map((group, index) => (
-                    <p key={index} className="text-sm text-gray-900">
-                      • {group.template.name}
-                    </p>
-                  ))}
-                </div>
+                <p className="text-sm font-bold text-gray-900 mb-1">Hàm lượng đạm</p>
+                <p className="text-sm text-gray-900">{getProteinContent(product.description || '')}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-1">Quy cách đóng gói</p>
+                <p className="text-sm text-gray-900">Bao {getBagSize(product.description || '')}</p>
               </div>
 
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">Nguyên liệu chính</p>
                 <p className="text-sm text-gray-900">
-                  Ngô, cám gạo, bột cá, bột đậu tương, premix vitamin và khoáng chất, 
-                  amino acid tổng hợp, enzyme tiêu hóa, chất chống oxy hóa.
+                  {product.sector_id === 1 
+                    ? 'Ngô, cám gạo, bột cá, bột đậu tương, premix vitamin và khoáng chất, amino acid tổng hợp, enzyme tiêu hóa, chất chống oxy hóa.'
+                    : 'Ngô, cám gạo, bột cá, bột đậu tương, premix vitamin và khoáng chất, amino acid tổng hợp, enzyme tiêu hóa, chất chống oxy hóa, men tiêu hóa.'
+                  }
                 </p>
               </div>
 
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">Hướng dẫn sử dụng</p>
                 <p className="text-sm text-gray-900">
-                  Cho ăn tự do hoặc theo định lượng 3-4 lần/ngày. Lượng thức ăn: 
-                  heo con 3-5kg cho ăn 0.3-0.8kg/ngày. Luôn đảm bảo nước sạch cho heo uống.
+                  {product.sector_id === 1 
+                    ? 'Cho ăn tự do hoặc theo định lượng 3-4 lần/ngày. Lượng thức ăn tùy theo giai đoạn phát triển của lợn. Luôn đảm bảo nước sạch cho lợn uống.'
+                    : 'Cho ăn tự do hoặc theo định lượng 3-4 lần/ngày. Lượng thức ăn tùy theo giai đoạn phát triển của gia cầm. Luôn đảm bảo nước sạch cho gia cầm uống.'
+                  }
                 </p>
               </div>
 
@@ -407,9 +280,19 @@ export default function ProductDetailPage() {
                 <p className="text-sm font-bold text-gray-900 mb-1">Lưu ý</p>
                 <p className="text-sm text-gray-900">
                   Sản phẩm đạt tiêu chuẩn TCVN và được kiểm định chất lượng. 
-                  Để được tư vấn chi tiết về chương trình dinh dưỡng heo, 
-                  vui lòng liên hệ hotline 0969 66 33 87
+                  Để được tư vấn chi tiết về chương trình dinh dưỡng {product.sector_id === 1 ? 'lợn' : 'gia cầm'}, 
+                  vui lòng liên hệ hotline 03513 595 030
                 </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-gray-900 mb-1">Thông tin liên hệ</p>
+                <div className="text-sm text-gray-900 space-y-1">
+                  <p className="font-semibold">CÔNG TY CỔ PHẦN APPE JV VIỆT NAM</p>
+                  <p>Địa chỉ: Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam</p>
+                  <p>Điện thoại: 03513 595 030 | Fax: 03513 835 990</p>
+                  <p>Website: <a href="http://www.appe.vn" className="text-red-600 underline">www.appe.vn</a></p>
+                </div>
               </div>
             </div>
           </div>

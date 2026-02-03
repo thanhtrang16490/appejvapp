@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { User } from '@/types';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 
 // Default user
 const defaultUser: User = {
@@ -17,16 +16,12 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 export default function TestNavigationPage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
+  const [currentUser] = useState<User>(defaultUser);
 
   const testPages = [
     { name: 'Trang chủ', path: '/', description: 'Dashboard chính' },
@@ -45,9 +40,6 @@ export default function TestNavigationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex items-center justify-between p-4">

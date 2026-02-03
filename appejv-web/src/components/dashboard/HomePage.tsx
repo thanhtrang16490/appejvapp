@@ -9,29 +9,28 @@ import PromoBanners from './PromoBanners';
 import ProductSection from './ProductSection';
 import ContentGallery from './ContentGallery';
 import BottomNavigation from '../layout/BottomNavigation';
-import RoleSwitcher from '../demo/RoleSwitcher';
 
-// Default mock user data - Public user (no login required)
+// Default mock user data - Admin user
 const defaultUser: User = {
-  id: 4,
-  role_id: 4,
-  email: null,
-  password: '',
+  id: 1,
+  role_id: 1,
+  email: 'admin@appejv.vn',
+  password: '123456',
   created_at: '2024-01-01T00:00:00Z',
-  commission_rate: null,
-  name: 'Khách vãng lai',
-  phone: '',
+  commission_rate: 10,
+  name: 'Admin User',
+  phone: '0123456789',
   parent_id: null,
-  total_commission: null,
-  role: { name: 'public', description: 'Public User', id: 4 },
-  address: undefined,
-  avatar: undefined,
+  total_commission: 1000000,
+  role: { name: 'admin', description: 'Administrator', id: 1 },
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
+  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 export default function HomePage() {
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
 
   useEffect(() => {
     const loadData = async () => {
@@ -47,10 +46,6 @@ export default function HomePage() {
 
     loadData();
   }, []);
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
 
   if (loading) {
     return (
@@ -68,9 +63,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <HomeHeader user={currentUser} />
 

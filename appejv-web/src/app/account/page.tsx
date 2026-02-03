@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
-import RoleSwitcher from '@/components/demo/RoleSwitcher';
 
 // Mock customer data
 interface Customer {
@@ -54,21 +53,17 @@ const defaultUser: User = {
   parent_id: null,
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: '123 Đường ABC, Quận 1, TP.HCM',
+  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 type TabType = 'all' | 'potential' | 'purchased';
 
 export default function AccountPage() {
-  const [currentUser, setCurrentUser] = useState<User>(defaultUser);
+  const [currentUser] = useState<User>(defaultUser);
   const [activeTab, setActiveTab] = useState<TabType>('potential');
   const [customers] = useState<Customer[]>(mockCustomers);
   const [loading] = useState(false);
-
-  const handleUserChange = (user: User) => {
-    setCurrentUser(user);
-  };
 
   const getFilteredCustomers = () => {
     switch (activeTab) {
@@ -87,9 +82,6 @@ export default function AccountPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Demo Role Switcher */}
-      <RoleSwitcher currentUser={currentUser} onUserChange={handleUserChange} />
-
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
         <button 

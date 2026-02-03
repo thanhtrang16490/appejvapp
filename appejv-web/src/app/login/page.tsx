@@ -95,7 +95,18 @@ export default function LoginPage() {
   };
 
   const handleSupportCall = () => {
-    window.open('tel:0977879291', '_self');
+    const companyInfo = `CÔNG TY CỔ PHẦN APPE JV VIỆT NAM
+
+Địa chỉ: Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam
+Điện thoại: 03513 595 030
+Fax: 03513 835 990
+Website: www.appe.vn
+
+Bạn có muốn gọi điện thoại không?`;
+    
+    if (confirm(companyInfo)) {
+      window.open('tel:03513595030', '_self');
+    }
   };
 
   const handleViewWithoutLogin = () => {
