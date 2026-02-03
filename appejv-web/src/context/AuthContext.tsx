@@ -36,6 +36,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // DEVELOPMENT MODE: Auto-login with default user
+        if (process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+          const defaultUser: User = {
+            id: 1,
+            role_id: 2, // Agent role
+            email: 'dev@appejv.vn',
+            password: '',
+            created_at: new Date().toISOString(),
+            commission_rate: 10,
+            name: 'Developer User',
+            phone: '0123456789',
+            parent_id: null,
+            total_commission: 1000000,
+            role: { name: 'agent', description: 'Sales Agent', id: 2 },
+            address: 'Development Address',
+          };
+          
+          setAuthState({ 
+            user: defaultUser, 
+            isAuthenticated: true, 
+            isLoading: false, 
+            error: null 
+          });
+          return;
+        }
+
         // Check for authentication token and user data in cookies
         const authToken = Cookies.get('auth-token');
         const userDataStr = Cookies.get('user-data');

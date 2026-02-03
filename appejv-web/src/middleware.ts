@@ -16,6 +16,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // DEVELOPMENT MODE: Skip authentication check
+  if (process.env.NODE_ENV === 'development' || process.env.SKIP_AUTH === 'true') {
+    return NextResponse.next();
+  }
+
   // Check for authentication token in cookies
   const authToken = request.cookies.get('auth-token');
   const userData = request.cookies.get('user-data');
