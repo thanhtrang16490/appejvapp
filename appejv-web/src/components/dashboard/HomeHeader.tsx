@@ -1,6 +1,7 @@
 'use client';
 
 import { User } from '@/types';
+import { AvatarFrame } from '@/components/ui';
 
 interface HomeHeaderProps {
   user: User | null;
@@ -45,33 +46,7 @@ export default function HomeHeader({ user }: HomeHeaderProps) {
             }}
             className="flex items-center flex-1 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 rounded-full bg-white bg-opacity-30 border border-gray-300 flex items-center justify-center overflow-hidden">
-              {user?.avatar ? (
-                user.avatar === 'avatar-customer' ? (
-                  <img
-                    src="/images/avatar-customer.jpeg"
-                    alt={user.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                )
-              ) : null}
-              <div className={`w-full h-full flex items-center justify-center text-white ${user?.avatar ? 'hidden' : ''}`}>
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
+            <AvatarFrame name={user?.name || 'User'} size="md" className="border border-gray-300" />
             
             <div className="ml-3 flex-1 text-left">
               <p className="text-white text-base font-bold truncate">

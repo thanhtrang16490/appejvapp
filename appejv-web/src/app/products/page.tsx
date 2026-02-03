@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { User, Combo } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { PlaceholderFrame } from '@/components/ui';
@@ -20,76 +20,89 @@ const defaultUser: User = {
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
   address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
-interface NewProduct {
+interface ProductCategory {
   id: string;
-  action: string;
-  mainText: string;
-  buttonText: string;
+  name: string;
+  description: string;
+  icon: string;
   backgroundColor: string;
+  textColor: string;
 }
 
-const newProducts: NewProduct[] = [
+const productCategories: ProductCategory[] = [
   {
-    id: '1',
-    action: 'Thức ăn chăn nuôi',
-    mainText: 'GIẢI PHÁP MỚI',
-    buttonText: 'Xem ngay',
-    backgroundColor: '#D9261C',
+    id: 'gia-suc',
+    name: 'Thức ăn gia súc',
+    description: 'Thức ăn hỗn hợp và đậm đặc cho lợn, bò',
+    icon: '🐷',
+    backgroundColor: '#22C55E',
+    textColor: 'white',
   },
   {
-    id: '2',
-    action: 'Dinh dưỡng vật nuôi',
-    mainText: 'CÔNG NGHỆ VƯỢT TRỘI',
-    buttonText: 'Tìm hiểu',
-    backgroundColor: '#D9261C',
-  },
-  {
-    id: '3',
-    action: 'Sản phẩm mới',
-    mainText: 'TIẾT KIỆM CHI PHÍ',
-    buttonText: 'Chi tiết',
-    backgroundColor: '#D9261C',
+    id: 'gia-cam',
+    name: 'Thức ăn gia cầm',
+    description: 'Thức ăn hỗn hợp cho gà, vịt, ngan',
+    icon: '🐔',
+    backgroundColor: '#F59E0B',
+    textColor: 'white',
   },
 ];
 
 export default function ProductsPage() {
   const [currentUser] = useState<User>(defaultUser);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeNewProductIndex, setActiveNewProductIndex] = useState(0);
-  const [bestSellingProducts, setBestSellingProducts] = useState<Combo[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [allProducts, setAllProducts] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Load real product data from APPE JV sectors
-    const loadProducts = async () => {
+    const loadData = async () => {
       try {
         const allCombos = await mockSectorService.getAllCombos();
-        // Get first 8 products for best selling section
-        setBestSellingProducts(allCombos.slice(0, 8));
+        setAllProducts(allCombos);
       } catch (error) {
-        console.error('Error loading products:', error);
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadProducts();
+    loadData();
   }, []);
+
+  // Filter products based on search query and category
+  const filteredProducts = useMemo(() => {
+    let filtered = allProducts;
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      const categoryId = selectedCategory === 'gia-suc' ? 1 : 2;
+      filtered = filtered.filter(product => product.sector_id === categoryId);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        (product.description && product.description.toLowerCase().includes(query))
+      );
+    }
+
+    return filtered;
+  }, [allProducts, selectedCategory, searchQuery]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount);
   };
 
-  // Auto-scroll new products carousel
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveNewProductIndex((prev) => (prev + 1) % newProducts.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+  const getProductsByCategory = (sectorId: number, limit?: number) => {
+    const products = allProducts.filter(product => product.sector_id === sectorId);
+    return limit ? products.slice(0, limit) : products;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -104,7 +117,7 @@ export default function ProductsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-gray-900">Sản phẩm</h1>
+          <h1 className="text-xl font-bold text-gray-900">Sản phẩm APPE JV</h1>
           <button className="p-2 -mr-2">
             <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
               <span className="text-sm font-bold text-gray-600">?</span>
@@ -123,212 +136,342 @@ export default function ProductsPage() {
             </svg>
             <input
               type="text"
-              placeholder="Bạn muốn tìm sản phẩm nào?"
+              placeholder="Tìm kiếm sản phẩm thức ăn chăn nuôi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             />
           </div>
         </div>
 
-        {/* Sale Banner */}
-        <div className="mx-4 mb-4">
-          <div className="h-32 bg-yellow-400 rounded-lg flex items-center justify-center">
-            <h2 className="text-4xl font-bold text-black tracking-widest">S A L E</h2>
+        {/* Category Filter */}
+        <div className="px-4 mb-6">
+          <div className="flex space-x-3 overflow-x-auto pb-2">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200'
+              }`}
+            >
+              Tất cả ({allProducts.length})
+            </button>
+            {productCategories.map((category) => {
+              const count = allProducts.filter(p => 
+                p.sector_id === (category.id === 'gia-suc' ? 1 : 2)
+              ).length;
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedCategory === category.id
+                      ? 'text-white'
+                      : 'bg-white text-gray-600 border border-gray-200'
+                  }`}
+                  style={{
+                    backgroundColor: selectedCategory === category.id ? category.backgroundColor : undefined
+                  }}
+                >
+                  {category.icon} {category.name} ({count})
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Brand Cards */}
-        <div className="px-4 mb-6">
-          <div className="flex space-x-4">
-            <button
-              onClick={() => window.location.href = '/'}
-              className="flex-1 h-12 rounded-lg flex items-center justify-center shadow-sm transition-colors hover:opacity-80 bg-green-500"
-            >
-              <span className="text-sm font-bold text-white">Appe JV</span>
-            </button>
-            <button
-              onClick={() => window.location.href = '/'}
-              className="flex-1 h-12 rounded-lg flex items-center justify-center shadow-sm transition-colors hover:opacity-80 bg-yellow-400"
-            >
-              <span className="text-sm font-bold text-white">RTD</span>
-            </button>
+        {/* APPE JV Brand Banner */}
+        <div className="mx-4 mb-6">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">APPE JV VIETNAM</h2>
+                <p className="text-green-100 mb-3">Thức ăn chăn nuôi chất lượng cao</p>
+                <div className="flex items-center text-sm text-green-100">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                  Hà Nam, Việt Nam
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold">{allProducts.length}</div>
+                <div className="text-sm text-green-100">Sản phẩm</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* New Products Section */}
-        <div className="px-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Sản phẩm mới</h2>
-          
-          {/* Carousel */}
-          <div className="relative">
-            <div className="overflow-hidden rounded-lg">
-              <div 
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${activeNewProductIndex * 100}%)` }}
-              >
-                {newProducts.map((product) => (
-                  <div key={product.id} className="w-full flex-shrink-0">
-                    <div 
-                      className="h-40 rounded-lg flex items-center justify-end p-6 text-white relative overflow-hidden"
-                      style={{ backgroundColor: product.backgroundColor }}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </div>
+        ) : (
+          <>
+            {/* Search Results or Category View */}
+            {searchQuery.trim() ? (
+              <div className="px-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Kết quả tìm kiếm &quot;{searchQuery}&quot; ({filteredProducts.length})
+                  </h2>
+                  {filteredProducts.length > 0 && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="text-sm text-gray-500 hover:text-gray-700"
                     >
-                      {/* Background pattern */}
-                      <div className="absolute inset-0 opacity-10">
-                        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                        </svg>
+                      Xóa tìm kiếm
+                    </button>
+                  )}
+                </div>
+                
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 mb-4">
+                      <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy sản phẩm</h3>
+                    <p className="text-gray-500 mb-4">Thử tìm kiếm với từ khóa khác</p>
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                    >
+                      Xem tất cả sản phẩm
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {filteredProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => window.location.href = `/product/${product.id}`}
+                        className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                      >
+                        <div className="relative">
+                          <PlaceholderFrame 
+                            text="replace holder"
+                            className="w-full h-32 rounded-none"
+                            aspectRatio="none"
+                            textSize="xs"
+                          />
+                          <div className="absolute top-2 right-2 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium">
+                            {product.sector_id === 1 ? '🐷 Gia súc' : '🐔 Gia cầm'}
+                          </div>
+                        </div>
+                        <div className="p-3">
+                          <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                            {product.name}
+                          </h4>
+                          <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                            {product.description}
+                          </p>
+                          <p className="text-sm font-bold text-green-600">
+                            {formatCurrency(product.price)} đ
+                          </p>
+                        </div>
                       </div>
-                      
-                      <div className="text-right relative z-10">
-                        <p className="text-sm opacity-90 mb-1">{product.action}</p>
-                        <h3 className="text-xl font-bold mb-3">{product.mainText}</h3>
-                        <button className="bg-yellow-400 text-white px-4 py-2 rounded-full text-sm font-medium border border-white flex items-center">
-                          {product.buttonText}
-                          <svg className="w-3 h-3 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Category Sections */}
+                {selectedCategory === 'all' ? (
+                  <>
+                    {/* Thức ăn gia súc Section */}
+                    <div className="px-4 mb-8">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-2">🐷</span>
+                          <div>
+                            <h2 className="text-xl font-bold text-gray-900">Thức ăn gia súc</h2>
+                            <p className="text-sm text-gray-500">Thức ăn hỗn hợp và đậm đặc cho lợn, bò</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedCategory('gia-suc')}
+                          className="flex items-center text-green-600 hover:text-green-700"
+                        >
+                          <span className="text-sm font-medium mr-1">Tất cả</span>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </button>
                       </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        {getProductsByCategory(1, 6).map((product, index) => (
+                          <div
+                            key={product.id}
+                            onClick={() => window.location.href = `/product/${product.id}`}
+                            className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                          >
+                            <div className="relative">
+                              <PlaceholderFrame 
+                                text="replace holder"
+                                className="w-full h-32 rounded-none"
+                                aspectRatio="none"
+                                textSize="xs"
+                              />
+                              {index === 0 && (
+                                <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                                  BÁN CHẠY
+                                </div>
+                              )}
+                              {index === 1 && (
+                                <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                                  MỚI
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3">
+                              <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                                {product.name}
+                              </h4>
+                              <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                                {product.description}
+                              </p>
+                              <p className="text-sm font-bold text-green-600">
+                                {formatCurrency(product.price)} đ
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Thức ăn gia cầm Section */}
+                    <div className="px-4 mb-8">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center">
+                          <span className="text-2xl mr-2">🐔</span>
+                          <div>
+                            <h2 className="text-xl font-bold text-gray-900">Thức ăn gia cầm</h2>
+                            <p className="text-sm text-gray-500">Thức ăn hỗn hợp cho gà, vịt, ngan</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedCategory('gia-cam')}
+                          className="flex items-center text-amber-600 hover:text-amber-700"
+                        >
+                          <span className="text-sm font-medium mr-1">Tất cả</span>
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        {getProductsByCategory(2, 6).map((product, index) => (
+                          <div
+                            key={product.id}
+                            onClick={() => window.location.href = `/product/${product.id}`}
+                            className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                          >
+                            <div className="relative">
+                              <PlaceholderFrame 
+                                text="replace holder"
+                                className="w-full h-32 rounded-none"
+                                aspectRatio="none"
+                                textSize="xs"
+                              />
+                              {index === 0 && (
+                                <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                                  CHẤT LƯỢNG
+                                </div>
+                              )}
+                              {index === 1 && (
+                                <div className="absolute top-2 left-2 bg-purple-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                                  PHỔ BIẾN
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3">
+                              <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                                {product.name}
+                              </h4>
+                              <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                                {product.description}
+                              </p>
+                              <p className="text-sm font-bold text-amber-600">
+                                {formatCurrency(product.price)} đ
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Single Category View */
+                  <div className="px-4">
+                    <div className="mb-6">
+                      {selectedCategory === 'gia-suc' ? (
+                        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                          <div className="flex items-center mb-2">
+                            <span className="text-2xl mr-2">🐷</span>
+                            <h2 className="text-xl font-bold text-green-800">Thức ăn gia súc</h2>
+                          </div>
+                          <p className="text-green-700 text-sm">
+                            Thức ăn hỗn hợp và đậm đặc cho lợn, bò các giai đoạn phát triển. 
+                            Sản phẩm được nghiên cứu với công thức dinh dưỡng cân bằng, 
+                            giúp tối ưu hóa tỷ lệ chuyển đổi thức ăn và tăng trọng nhanh.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                          <div className="flex items-center mb-2">
+                            <span className="text-2xl mr-2">🐔</span>
+                            <h2 className="text-xl font-bold text-amber-800">Thức ăn gia cầm</h2>
+                          </div>
+                          <p className="text-amber-700 text-sm">
+                            Thức ăn hỗn hợp cho gà, vịt, ngan các giai đoạn phát triển. 
+                            Được phân chia theo từng giai đoạn với hàm lượng đạm phù hợp, 
+                            đảm bảo gia cầm phát triển đều và đạt hiệu quả kinh tế cao.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {filteredProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          onClick={() => window.location.href = `/product/${product.id}`}
+                          className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                        >
+                          <div className="relative">
+                            <PlaceholderFrame 
+                              text="replace holder"
+                              className="w-full h-32 rounded-none"
+                              aspectRatio="none"
+                              textSize="xs"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
+                              {product.name}
+                            </h4>
+                            <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                              {product.description}
+                            </p>
+                            <p className="text-sm font-bold text-green-600">
+                              {formatCurrency(product.price)} đ
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Pagination dots */}
-            <div className="flex justify-center mt-4 space-x-2">
-              {newProducts.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setActiveNewProductIndex(index)}
-                  className={`h-0.5 rounded-full transition-all ${
-                    index === activeNewProductIndex
-                      ? 'w-4 bg-red-600'
-                      : 'w-3 bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Best Selling Section */}
-        <div className="px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Bán chạy</h2>
-          
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-            </div>
-          ) : (
-            <>
-              {/* Thức ăn gia súc Section */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-bold text-gray-500 uppercase">Thức ăn gia súc</span>
-                  <button className="flex items-center text-red-600 hover:text-red-700">
-                    <span className="text-sm font-medium mr-1">Tất cả</span>
-                    <img
-                      src="/images/arrow-icon.png"
-                      alt="Arrow"
-                      className="w-5 h-5"
-                    />
-                  </button>
-                </div>
-                
-                <div className="flex space-x-4 overflow-x-auto pb-4">
-                  {bestSellingProducts.filter(product => product.sector_id === 1).slice(0, 4).map((product, index) => (
-                    <div
-                      key={product.id}
-                      onClick={() => window.location.href = `/product/${product.id}`}
-                      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                    >
-                      <div className="relative">
-                        <PlaceholderFrame 
-                          text="replace holder"
-                          className="w-full h-32 rounded-none"
-                          aspectRatio="none"
-                          textSize="xs"
-                        />
-                        {index === 0 && (
-                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                            BÁN CHẠY
-                          </div>
-                        )}
-                        {index === 1 && (
-                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                            MỚI
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                          {product.name}
-                        </h4>
-                        <p className="text-sm font-bold text-red-600">
-                          {formatCurrency(product.price)} đ
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Thức ăn gia cầm Section */}
-              <div className="mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-sm font-bold text-gray-500 uppercase">Thức ăn gia cầm</span>
-                  <button className="flex items-center text-red-600 hover:text-red-700">
-                    <span className="text-sm font-medium mr-1">Tất cả</span>
-                    <img
-                      src="/images/arrow-icon.png"
-                      alt="Arrow"
-                      className="w-5 h-5"
-                    />
-                  </button>
-                </div>
-                
-                <div className="flex space-x-4 overflow-x-auto pb-4">
-                  {bestSellingProducts.filter(product => product.sector_id === 2).slice(0, 4).map((product, index) => (
-                    <div
-                      key={product.id}
-                      onClick={() => window.location.href = `/product/${product.id}`}
-                      className="flex-shrink-0 w-40 bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                    >
-                      <div className="relative">
-                        <PlaceholderFrame 
-                          text="replace holder"
-                          className="w-full h-32 rounded-none"
-                          aspectRatio="none"
-                          textSize="xs"
-                        />
-                        {index === 0 && (
-                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                            CHẤT LƯỢNG
-                          </div>
-                        )}
-                        {index === 1 && (
-                          <div className="absolute top-2 left-0 bg-white px-2 py-1 rounded-r text-xs font-semibold">
-                            PHỔ BIẾN
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-3">
-                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                          {product.name}
-                        </h4>
-                        <p className="text-sm font-bold text-red-600">
-                          {formatCurrency(product.price)} đ
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {/* Bottom Navigation */}

@@ -14,8 +14,7 @@ const MOCK_USERS: User[] = [
     parent_id: null,
     total_commission: 1000000,
     role: { name: 'admin', description: 'Administrator', id: 1 },
-    address: '123 Đường ABC, Quận 1, TP.HCM',
-    avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
+    address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   },
   {
     id: 2,
@@ -29,8 +28,7 @@ const MOCK_USERS: User[] = [
     parent_id: 1,
     total_commission: 500000,
     role: { name: 'agent', description: 'Sales Agent', id: 2 },
-    address: '456 Đường XYZ, Quận 3, TP.HCM',
-    avatar: 'https://ui-avatars.com/api/?name=Nguyen+Van+A&background=12B669&color=fff',
+    address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   },
   {
     id: 3,
@@ -44,8 +42,7 @@ const MOCK_USERS: User[] = [
     parent_id: 2,
     total_commission: null,
     role: { name: 'user', description: 'Customer', id: 3 },
-    address: '789 Đường DEF, Quận 5, TP.HCM',
-    avatar: 'https://ui-avatars.com/api/?name=Tran+Thi+B&background=0066CC&color=fff',
+    address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
   },
   {
     id: 4,
@@ -60,7 +57,6 @@ const MOCK_USERS: User[] = [
     total_commission: null,
     role: { name: 'public', description: 'Public User', id: 4 },
     address: undefined,
-    avatar: undefined,
   },
 ];
 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import BottomNavigation from '@/components/layout/BottomNavigation';
+import { AvatarFrame } from '@/components/ui';
 
 // Default user
 const defaultUser: User = {
@@ -18,7 +19,6 @@ const defaultUser: User = {
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
   address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 export default function ProfilePage() {
@@ -36,13 +36,6 @@ export default function ProfilePage() {
     const cleaned = phoneNumber.replace(/\D/g, '');
     if (cleaned.length !== 10) return phoneNumber;
     return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
-  };
-
-  const getInitials = (name: string): string => {
-    if (!name) return '';
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
   };
 
   const handleLogout = () => {
@@ -103,26 +96,7 @@ Bạn có muốn gọi điện thoại không?`;
 
         {/* Profile Info */}
         <div className="relative z-10 flex flex-col items-center justify-center h-full pt-8">
-          <div className="w-16 h-16 rounded-full border-2 border-white overflow-hidden mb-2">
-            {currentUser.avatar && currentUser.avatar !== 'avatar-customer' ? (
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  target.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <span className="text-2xl font-bold text-gray-600">
-                  {getInitials(currentUser.name)}
-                </span>
-              </div>
-            )}
-          </div>
+          <AvatarFrame name={currentUser.name} size="lg" className="border-2 border-white mb-2" />
           <h1 className="text-lg font-medium text-white mb-1 text-shadow">
             {currentUser.name}
           </h1>

@@ -19,7 +19,6 @@ const defaultUser: User = {
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
   address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 interface MediaContent {
@@ -50,124 +49,167 @@ interface Post {
   hasImage: boolean;
 }
 
-interface Sector {
-  id: number;
-  name: string;
-  code: string;
-  image: string;
-  image_rectangular: string;
-  description: string | null;
-  tech_phone: string | null;
-  sale_phone: string | null;
-  post_count?: number;
-}
-
-// Mock data for sectors
-const mockSectors = [
-  {
-    id: 1,
-    name: 'Appe JV',
-    code: 'APPEJV',
-    image: '',
-    image_rectangular: '',
-    description: 'Thức ăn chăn nuôi Appe JV',
-    tech_phone: null,
-    sale_phone: null,
-    post_count: 15,
-  },
-  {
-    id: 2,
-    name: 'RTD',
-    code: 'RTD',
-    image: '',
-    image_rectangular: '',
-    description: 'Thức ăn chăn nuôi RTD',
-    tech_phone: null,
-    sale_phone: null,
-    post_count: 8,
-  },
-];
-
 // Mock posts data
 const mockPosts: Post[] = [
   {
     id: 1,
-    title: 'Chỉ 1 triệu đồng',
-    description: 'Bạn có tin: Chỉ 1 triệu đồng cho 1 tấn thức ăn chăn nuôi? Hãy cùng Appe JV tìm hiểu về cách nuôi dưỡng vật nuôi hiệu quả với thức ăn chất lượng cao...',
-    content: 'Bạn có tin: Chỉ 1 triệu đồng cho 1 tấn thức ăn chăn nuôi? Hãy cùng Appe JV tìm hiểu về cách nuôi dưỡng vật nuôi hiệu quả với thức ăn chất lượng cao. Với công thức dinh dưỡng tối ưu và nguyên liệu tự nhiên, chúng tôi mang đến cho bạn những lựa chọn tốt nhất.',
-    hashtag: '#appejvfeed #thucanchangnuoi #post #bancotin #1trieudongcho1tan',
+    title: 'Thức ăn chăn nuôi APPE JV - Giải pháp dinh dưỡng tối ưu',
+    description: 'APPE JV mang đến những sản phẩm thức ăn chăn nuôi chất lượng cao với công thức dinh dưỡng cân bằng, giúp vật nuôi phát triển khỏe mạnh và đạt hiệu quả kinh tế tối ưu.',
+    content: 'APPE JV mang đến những sản phẩm thức ăn chăn nuôi chất lượng cao với công thức dinh dưỡng cân bằng, giúp vật nuôi phát triển khỏe mạnh và đạt hiệu quả kinh tế tối ưu. Với nhiều năm kinh nghiệm trong ngành chăn nuôi, chúng tôi cam kết cung cấp những giải pháp dinh dưỡng tốt nhất cho từng giai đoạn phát triển của vật nuôi.',
+    hashtag: '#appejv #thucanchangnuoi #dinhdung #chatluong',
     imageUrl: '',
     category: {
-      code: 'HDMD',
+      code: 'PROD',
       id: 1,
-      name: 'Hiểu đúng mua đúng',
+      name: 'Sản phẩm',
       sector: 'APPEJV',
     },
-    created_at: '2024-02-01T10:00:00Z',
+    created_at: '2024-02-03T10:00:00Z',
     hasImage: true,
     media_contents: [
       {
         id: 1,
-        title: 'Sample Image',
+        title: 'APPE JV Products',
         kind: 'image',
         content_id: 1,
         link: '',
         thumbnail: null,
-        created_at: '2024-02-01T10:00:00Z',
+        created_at: '2024-02-03T10:00:00Z',
       }
     ],
   },
   {
     id: 2,
-    title: 'Bài viết mới nhất từ Appe JV',
-    description: 'Khám phá những xu hướng mới nhất trong công nghệ sản xuất thức ăn chăn nuôi. Tìm hiểu cách áp dụng hiệu quả cho trang trại và hộ chăn nuôi.',
-    content: 'Khám phá những xu hướng mới nhất trong công nghệ sản xuất thức ăn chăn nuôi. Tìm hiểu cách áp dụng hiệu quả cho trang trại và hộ chăn nuôi. Với nhiều năm kinh nghiệm, chúng tôi cam kết mang đến những giải pháp dinh dưỡng tốt nhất.',
-    hashtag: '#appejv #thucanchangnuoi #congnghe',
+    title: 'Hướng dẫn chăn nuôi lợn hiệu quả với thức ăn APPE JV',
+    description: 'Tìm hiểu cách sử dụng thức ăn hỗn hợp APPE JV để tối ưu hóa tỷ lệ chuyển đổi thức ăn và tăng trọng nhanh cho lợn ở mọi giai đoạn phát triển.',
+    content: 'Thức ăn hỗn hợp APPE JV được nghiên cứu và sản xuất theo công nghệ tiên tiến, đảm bảo cung cấp đầy đủ dinh dưỡng cho lợn ở mọi giai đoạn phát triển. Với hàm lượng đạm từ 13-20%, sản phẩm giúp tối ưu hóa tỷ lệ chuyển đổi thức ăn và tăng trọng nhanh. Hướng dẫn chi tiết cách sử dụng và liều lượng phù hợp cho từng giai đoạn.',
+    hashtag: '#appejv #channoilon #huongdan #tangtrong',
     imageUrl: '',
     category: {
-      code: 'NEWS',
+      code: 'GUIDE',
       id: 2,
-      name: 'Tin tức',
+      name: 'Hướng dẫn',
       sector: 'APPEJV',
     },
-    created_at: '2024-02-01T08:00:00Z',
+    created_at: '2024-02-02T15:30:00Z',
     hasImage: true,
     media_contents: [
       {
         id: 2,
-        title: 'Latest News Image',
+        title: 'Pig Farming Guide',
         kind: 'image',
         content_id: 2,
         link: '',
         thumbnail: null,
-        created_at: '2024-02-01T08:00:00Z',
+        created_at: '2024-02-02T15:30:00Z',
       }
     ],
   },
   {
     id: 3,
-    title: 'Thức ăn chăn nuôi RTD - Dinh dưỡng tối ưu cho vật nuôi',
-    description: 'RTD mang đến những sản phẩm thức ăn chăn nuôi chất lượng cao, đảm bảo dinh dưỡng tối ưu cho sự phát triển khỏe mạnh của vật nuôi.',
-    content: 'RTD mang đến những sản phẩm thức ăn chăn nuôi chất lượng cao, đảm bảo dinh dưỡng tối ưu cho sự phát triển khỏe mạnh của vật nuôi. Với công thức khoa học và nguyên liệu tự nhiên, chúng tôi đảm bảo sự hài lòng của khách hàng.',
-    hashtag: '#rtd #thucanchangnuoi #dinhdung',
+    title: 'Thức ăn gia cầm APPE JV - Chất lượng vượt trội',
+    description: 'Khám phá dòng sản phẩm thức ăn gia cầm APPE JV với công thức đặc biệt dành cho gà, vịt, ngan các giai đoạn phát triển.',
+    content: 'Thức ăn hỗn hợp cho gà, vịt, ngan APPE JV được thiết kế phù hợp với đặc điểm sinh lý của gia cầm. Với công thức dinh dưỡng cân bằng và hàm lượng đạm từ 17-21%, sản phẩm giúp gia cầm phát triển đều, tăng trọng nhanh và đạt hiệu quả kinh tế cao. Đặc biệt phù hợp cho chăn nuôi quy mô công nghiệp.',
+    hashtag: '#appejv #thucangiacam #ga #vit #ngan',
     imageUrl: '',
     category: {
       code: 'PROD',
       id: 3,
       name: 'Sản phẩm',
-      sector: 'ELT',
+      sector: 'APPEJV',
     },
-    created_at: '2024-01-31T15:00:00Z',
+    created_at: '2024-02-01T09:15:00Z',
     hasImage: true,
     media_contents: [
       {
         id: 3,
-        title: 'Elevator Image',
+        title: 'Poultry Feed Products',
         kind: 'image',
         content_id: 3,
         link: '',
         thumbnail: null,
-        created_at: '2024-01-31T15:00:00Z',
+        created_at: '2024-02-01T09:15:00Z',
+      }
+    ],
+  },
+  {
+    id: 4,
+    title: 'Công nghệ sản xuất thức ăn chăn nuôi hiện đại tại APPE JV',
+    description: 'Tìm hiểu về quy trình sản xuất thức ăn chăn nuôi hiện đại với công nghệ tiên tiến và kiểm soát chất lượng nghiêm ngặt tại APPE JV.',
+    content: 'APPE JV áp dụng công nghệ sản xuất hiện đại với dây chuyền tự động, đảm bảo chất lượng sản phẩm ổn định. Quy trình kiểm soát chất lượng nghiêm ngặt từ khâu nguyên liệu đầu vào đến sản phẩm hoàn thiện. Tất cả sản phẩm đều được kiểm tra dinh dưỡng và an toàn thực phẩm theo tiêu chuẩn quốc tế.',
+    hashtag: '#appejv #congnghe #sanxuat #chatluong',
+    imageUrl: '',
+    category: {
+      code: 'NEWS',
+      id: 4,
+      name: 'Tin tức',
+      sector: 'APPEJV',
+    },
+    created_at: '2024-01-31T14:20:00Z',
+    hasImage: true,
+    media_contents: [
+      {
+        id: 4,
+        title: 'Production Technology',
+        kind: 'image',
+        content_id: 4,
+        link: '',
+        thumbnail: null,
+        created_at: '2024-01-31T14:20:00Z',
+      }
+    ],
+  },
+  {
+    id: 5,
+    title: 'Lợi ích của thức ăn đậm đặc cao cấp A999',
+    description: 'Thức ăn đậm đặc A999 với hàm lượng đạm lên đến 46% là giải pháp tối ưu cho việc bổ sung dinh dưỡng cho lợn.',
+    content: 'Thức ăn đậm đặc A999 với hàm lượng đạm lên đến 46% là giải pháp tối ưu cho việc bổ sung dinh dưỡng cho lợn. Sản phẩm giúp cải thiện sức khỏe đường ruột, tăng cường hệ miễn dịch và nâng cao hiệu quả chăn nuôi. Đặc biệt hiệu quả cho lợn từ giai đoạn tập ăn đến xuất chuồng.',
+    hashtag: '#appejv #A999 #damdac #protein #lon',
+    imageUrl: '',
+    category: {
+      code: 'PROD',
+      id: 5,
+      name: 'Sản phẩm',
+      sector: 'APPEJV',
+    },
+    created_at: '2024-01-30T11:45:00Z',
+    hasImage: true,
+    media_contents: [
+      {
+        id: 5,
+        title: 'A999 Concentrate Feed',
+        kind: 'image',
+        content_id: 5,
+        link: '',
+        thumbnail: null,
+        created_at: '2024-01-30T11:45:00Z',
+      }
+    ],
+  },
+  {
+    id: 6,
+    title: 'Chăn nuôi bò thịt hiệu quả với thức ăn A618',
+    description: 'Thức ăn hỗn hợp A618 dành cho bò thịt được thiết kế đặc biệt với hàm lượng đạm 16%, phù hợp với nhu cầu dinh dưỡng của bò.',
+    content: 'Thức ăn hỗn hợp A618 dành cho bò thịt được thiết kế đặc biệt với hàm lượng đạm 16%, phù hợp với nhu cầu dinh dưỡng của bò trong giai đoạn nuôi thịt. Sản phẩm giúp bò phát triển khỏe mạnh, tăng trọng đều và đạt trọng lượng xuất chuồng tối ưu. Công thức cân bằng giúp tiết kiệm chi phí chăn nuôi.',
+    hashtag: '#appejv #A618 #bo #thit #changnuoi',
+    imageUrl: '',
+    category: {
+      code: 'GUIDE',
+      id: 6,
+      name: 'Hướng dẫn',
+      sector: 'APPEJV',
+    },
+    created_at: '2024-01-29T16:10:00Z',
+    hasImage: true,
+    media_contents: [
+      {
+        id: 6,
+        title: 'Cattle Feed A618',
+        kind: 'image',
+        content_id: 6,
+        link: '',
+        thumbnail: null,
+        created_at: '2024-01-29T16:10:00Z',
       }
     ],
   },
@@ -228,7 +270,6 @@ export default function GalleryPage() {
   const [currentImageIndexes, setCurrentImageIndexes] = useState<{ [key: number]: number }>({});
   const [showOptions, setShowOptions] = useState(false);
   const [loading] = useState(false);
-  const sectors = mockSectors;
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const handleImageNavigation = (postId: number, direction: 'prev' | 'next') => {
@@ -291,26 +332,7 @@ export default function GalleryPage() {
 
       {/* Content */}
       <div className="flex-1 pb-20">
-        {/* Sectors Header */}
-        <div className="p-4">
-          <div className="flex space-x-3">
-            {sectors.map((sector) => (
-              <div key={sector.id} className="bg-gray-700 rounded-lg p-4 flex-1">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">
-                      {sector.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm">{sector.name}</p>
-                    <p className="text-white text-xs opacity-80">{sector.post_count || 0} bài viết</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+       
 
         {/* Posts List */}
         <div className="space-y-0">
@@ -326,24 +348,24 @@ export default function GalleryPage() {
             posts.map((post) => {
               const currentIndex = currentImageIndexes[post.id] || 0;
               const mediaItems = post.media_contents || [];
-              const sector = sectors.find(s => s.code === post.category?.sector);
 
               return (
                 <div key={post.id} className="bg-white">
                   {/* User Info Bar */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-100">
                     <div className="flex items-center space-x-3">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">
-                          {sector?.name?.charAt(0) || 'U'}
-                        </span>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">A</span>
                       </div>
-                      <span className="font-semibold text-gray-900 text-sm">
-                        {sector?.name || 'Unknown'}
-                      </span>
-                      <span className="text-gray-500 text-xs">
-                        {post.created_at ? formatTimeAgo(post.created_at) : '0 phút trước'}
-                      </span>
+                      <div>
+                        <span className="font-semibold text-gray-900 text-sm">APPE JV</span>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          Hà Nam • {post.created_at ? formatTimeAgo(post.created_at) : '0 phút trước'}
+                        </div>
+                      </div>
                     </div>
                     <button
                       onClick={() => {
@@ -420,7 +442,7 @@ export default function GalleryPage() {
                     {/* Category */}
                     {post.category && (
                       <div className="mb-2">
-                        <span className="inline-block bg-red-50 text-red-600 text-xs font-medium px-2 py-1 rounded-full border border-red-200">
+                        <span className="inline-block bg-green-50 text-green-600 text-xs font-medium px-2 py-1 rounded-full border border-green-200">
                           {post.category.name}
                         </span>
                       </div>
@@ -430,7 +452,7 @@ export default function GalleryPage() {
                     <div className="mb-2">
                       <p className="text-gray-900 text-sm leading-relaxed">
                         {post.description}
-                        <button className="text-red-600 font-medium ml-1">
+                        <button className="text-green-600 font-medium ml-1">
                           ... Xem chi tiết
                         </button>
                       </p>

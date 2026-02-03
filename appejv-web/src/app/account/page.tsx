@@ -54,7 +54,6 @@ const defaultUser: User = {
   total_commission: 1000000,
   role: { name: 'admin', description: 'Administrator', id: 1 },
   address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-  avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
 };
 
 type TabType = 'all' | 'potential' | 'purchased';

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { mockAuthService } from '@/services/mock-data';
+import { AvatarFrame } from '@/components/ui';
 
 interface Commission {
   id: number;
@@ -18,7 +19,6 @@ interface Agent {
   id: number;
   name: string;
   phone: string;
-  avatar: string | null;
   address: string | null;
   commission_rate: number;
   total_commission: number;
@@ -35,7 +35,6 @@ const mockAgents: Agent[] = [
     id: 2,
     name: 'Nguyễn Văn A',
     phone: '0901234567',
-    avatar: null,
     address: 'Hà Nội',
     commission_rate: 5,
     total_commission: 15000000,
@@ -68,7 +67,6 @@ const mockAgents: Agent[] = [
     id: 3,
     name: 'Trần Thị B',
     phone: '0912345678',
-    avatar: null,
     address: 'TP.HCM',
     commission_rate: 4,
     total_commission: 12000000,
@@ -92,7 +90,6 @@ const mockAgents: Agent[] = [
     id: 4,
     name: 'Lê Văn C',
     phone: '0923456789',
-    avatar: null,
     address: 'Đà Nẵng',
     commission_rate: 6,
     total_commission: 8000000,
@@ -116,7 +113,6 @@ const mockAgents: Agent[] = [
     id: 5,
     name: 'Phạm Thị D',
     phone: '0934567890',
-    avatar: null,
     address: 'Cần Thơ',
     commission_rate: 5,
     total_commission: 6000000,
@@ -194,7 +190,6 @@ export default function CommunityPage() {
           total_commission: 1000000,
           role: { name: 'admin', description: 'Administrator', id: 1 },
           address: '123 Đường ABC, Quận 1, TP.HCM',
-          avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=ED1C24&color=fff',
         });
       }
     };
@@ -270,21 +265,7 @@ export default function CommunityPage() {
     const agent = agents.find(a => a.name === activity.name);
     return (
       <div className="flex items-center py-2 gap-2">
-        <div className="w-6 h-6 rounded-full border border-gray-300 overflow-hidden flex-shrink-0">
-          {agent?.avatar ? (
-            <img
-              src={agent.avatar}
-              alt={agent.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <img
-              src="/images/avatar-customer.jpeg"
-              alt={agent?.name || 'Agent'}
-              className="w-full h-full object-cover"
-            />
-          )}
-        </div>
+        <AvatarFrame name={agent?.name || activity.name} size="sm" />
         <div className="flex-1 flex justify-between">
           <div className="flex flex-col">
             <span className="text-sm text-gray-900">{activity.name}</span>
@@ -332,21 +313,7 @@ export default function CommunityPage() {
         </div>
         <div className="flex-1 flex justify-between bg-white rounded-lg p-2 ml-2 shadow-sm">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full border border-gray-300 overflow-hidden">
-              {agentData?.avatar ? (
-                <img
-                  src={agentData.avatar}
-                  alt={agentData.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <img
-                  src="/images/avatar-customer.jpeg"
-                  alt={agentData?.name || 'Agent'}
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
+            <AvatarFrame name={agentData?.name || agent.name} size="sm" />
             <span className="text-sm text-gray-900">{agent.name}</span>
           </div>
           <div className="text-right">
@@ -412,23 +379,13 @@ export default function CommunityPage() {
               {agents.slice(0, 4).map((agent, index) => (
                 <div
                   key={agent.id}
-                  className={`w-8 h-8 rounded-full border border-white overflow-hidden ${
-                    index > 0 ? '-ml-2' : ''
-                  }`}
+                  className={`${index > 0 ? '-ml-2' : ''}`}
                 >
-                  {agent.avatar ? (
-                    <img
-                      src={agent.avatar}
-                      alt={agent.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src="/images/avatar-customer.jpeg"
-                      alt={agent.name}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
+                  <AvatarFrame 
+                    name={agent.name} 
+                    size="sm" 
+                    className={`w-8 h-8 border border-white ${index > 0 ? '' : ''}`}
+                  />
                 </div>
               ))}
               {agents.length > 4 && (
