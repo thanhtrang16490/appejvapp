@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "APPE JV Admin Panel and API",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
