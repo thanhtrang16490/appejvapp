@@ -10,7 +10,10 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "create-tables": "node scripts/create-tables.js",
-    "setup-db": "node scripts/setup-database.js"
+    "setup-db": "node scripts/setup-database.js",
+    "import-mock": "node scripts/import-mock-data.js",
+    "reset-data": "node scripts/reset-data.js",
+    "sync-auth": "node scripts/sync-auth.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

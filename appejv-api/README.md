@@ -143,10 +143,25 @@ npm run dev
 3. Cấu hình environment variables
 4. Deploy
 
-### Manual
+## Scripts Có Sẵn
+
 ```bash
-npm run build
-npm start
+# Development
+npm run dev              # Chạy development server
+npm run build           # Build production
+npm start              # Chạy production server
+
+# Database
+npm run create-tables   # Tạo tables trong Supabase (nếu cần)
+npm run setup-db       # Seed dữ liệu cơ bản
+npm run import-mock    # Import dữ liệu mock từ appejv-web (khuyến nghị)
+npm run reset-data     # Xóa tất cả dữ liệu (giữ lại admin)
+
+# Authentication
+npm run sync-auth      # Đồng bộ user giữa database và Supabase Auth
+
+# Testing
+node test-auth.js      # Test hệ thống authentication
 ```
 
 ## API Usage

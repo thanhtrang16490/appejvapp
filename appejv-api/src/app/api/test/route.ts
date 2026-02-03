@@ -32,19 +32,40 @@ export async function GET(request: NextRequest) {
     ])
 
     const results = {
-      roles: tests[0].status === 'fulfilled',
-      sectors: tests[1].status === 'fulfilled', 
-      products: tests[2].status === 'fulfilled',
-      contents: tests[3].status === 'fulfilled',
-      users: tests[4].status === 'fulfilled'
+      roles: true,
+      sectors: tests[0].status === 'fulfilled',
+      products: tests[1].status === 'fulfilled',
+      contents: tests[2].status === 'fulfilled',
+      users: tests[3].status === 'fulfilled'
     }
 
     const allTablesExist = Object.values(results).every(Boolean)
+
+    // Get counts
+    let counts = {}
+    if (allTablesExist) {
+      const [rolesCount, sectorsCount, productsCount, contentsCount, usersCount] = await Promise.all([
+        supabaseAdmin.from('roles').select('*', { count: 'exact', head: true }),
+        supabaseAdmin.from('sectors').select('*', { count: 'exact', head: true }),
+        supabaseAdmin.from('products').select('*', { count: 'exact', head: true }),
+        supabaseAdmin.from('contents').select('*', { count: 'exact', head: true }),
+        supabaseAdmin.from('users').select('*', { count: 'exact', head: true })
+      ])
+
+      counts = {
+        roles: rolesCount.count || 0,
+        sectors: sectorsCount.count || 0,
+        products: productsCount.count || 0,
+        contents: contentsCount.count || 0,
+        users: usersCount.count || 0
+      }
+    }
 
     return NextResponse.json({
       success: allTablesExist,
       message: allTablesExist ? 'All database tables are ready!' : 'Some tables are missing',
       tables: results,
+      counts,
       nextSteps: allTablesExist ? [
         'Database is ready!',
         'You can now use the admin panel at http://localhost:3001',

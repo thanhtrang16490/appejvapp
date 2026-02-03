@@ -43,20 +43,30 @@ npm run create-tables
 
 ## Bước 4: Seed Dữ liệu Mẫu
 
-Sau khi tạo tables thành công, chạy script để thêm dữ liệu mẫu:
+Sau khi tạo tables thành công, bạn có thể chọn một trong hai cách để thêm dữ liệu:
+
+### Cách 1: Import dữ liệu mock từ appejv-web (Khuyến nghị)
+
+```bash
+npm run import-mock
+```
+
+Script này sẽ import:
+- ✅ 2 sectors (Thức ăn gia súc, Thức ăn gia cầm)
+- ✅ 41 sản phẩm thực từ bảng giá APPE JV
+- ✅ 10 bài viết hướng dẫn và tin tức
+- ✅ 5 người dùng mẫu (agents và customers)
+
+### Cách 2: Seed dữ liệu cơ bản
 
 ```bash
 npm run setup-db
 ```
 
-Kết quả mong đợi:
-```
-🚀 Setting up APPE JV database...
-📝 Creating roles...
-🏢 Creating sectors...
-📦 Creating products...
-📝 Creating contents...
-✅ Database setup completed successfully!
+### Reset dữ liệu (nếu cần)
+
+```bash
+npm run reset-data
 ```
 
 ## Bước 5: Tạo Admin User trong Supabase Auth
