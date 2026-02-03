@@ -1,45 +1,166 @@
 'use client';
 
-import { useState } from 'react';
-import { User } from '@/types';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 
-// Default user
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
-
-interface Commission {
+interface RevenueData {
   id: number;
-  month: number;
-  amount: number;
-  paid: boolean;
-  contractName: string;
+  revenue_amount: number;
+  commission_amount: number;
+  commission_rate: number;
+  period_month: number;
+  period_year: number;
+  status: string;
+  order: {
+    id: number;
+    order_code: string;
+    customer_name: string;
+    total_amount: number;
+    order_date: string;
+  };
 }
 
-const mockCommissions: Commission[] = [
-  { id: 1, month: 1, amount: 2500000, paid: true, contractName: 'Hợp đồng #001' },
-  { id: 2, month: 1, amount: 1800000, paid: true, contractName: 'Hợp đồng #002' },
-  { id: 3, month: 2, amount: 3200000, paid: false, contractName: 'Hợp đồng #003' },
-  { id: 4, month: 2, amount: 1500000, paid: true, contractName: 'Hợp đồng #004' },
-  { id: 5, month: 3, amount: 2800000, paid: false, contractName: 'Hợp đồng #005' },
+interface OrderSummary {
+  total_orders: number;
+  total_revenue: number;
+  pending_orders: number;
+  delivered_orders: number;
+}
+
+// Mock data
+const mockRevenueData: RevenueData[] = [
+  {
+    id: 1,
+    revenue_amount: 15000000,
+    commission_amount: 750000,
+    commission_rate: 5,
+    period_month: 12,
+    period_year: 2024,
+    status: 'recorded',
+    order: {
+      id: 1,
+      order_code: 'ORD-001',
+      customer_name: 'Trại chăn nuôi Hòa Bình',
+      total_amount: 15000000,
+      order_date: '2024-12-01'
+    }
+  },
+  {
+    id: 2,
+    revenue_amount: 8500000,
+    commission_amount: 425000,
+    commission_rate: 5,
+    period_month: 12,
+    period_year: 2024,
+    status: 'recorded',
+    order: {
+      id: 2,
+      order_code: 'ORD-002',
+      customer_name: 'Trang trại gia cầm Minh Phát',
+      total_amount: 8500000,
+      order_date: '2024-12-05'
+    }
+  },
+  {
+    id: 3,
+    revenue_amount: 12000000,
+    commission_amount: 600000,
+    commission_rate: 5,
+    period_month: 11,
+    period_year: 2024,
+    status: 'recorded',
+    order: {
+      id: 3,
+      order_code: 'ORD-003',
+      customer_name: 'Hợp tác xã chăn nuôi Thành Đạt',
+      total_amount: 12000000,
+      order_date: '2024-11-20'
+    }
+  },
+  {
+    id: 4,
+    revenue_amount: 6800000,
+    commission_amount: 340000,
+    commission_rate: 5,
+    period_month: 11,
+    period_year: 2024,
+    status: 'recorded',
+    order: {
+      id: 4,
+      order_code: 'ORD-004',
+      customer_name: 'Trang trại lợn sạch Phú Thọ',
+      total_amount: 6800000,
+      order_date: '2024-11-15'
+    }
+  }
 ];
 
+const mockOrderSummary: OrderSummary = {
+  total_orders: 25,
+  total_revenue: 125000000,
+  pending_orders: 3,
+  delivered_orders: 22
+};
+
 export default function StatsPage() {
-  const [currentUser] = useState<User>(defaultUser);
-  const [commissions] = useState<Commission[]>(mockCommissions);
-  const [loading] = useState(false);
+  const { authState } = useAuth();
+  const toast = useToast();
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [orderSummary, setOrderSummary] = useState<OrderSummary>({
+    total_orders: 0,
+    total_revenue: 0,
+    pending_orders: 0,
+    delivered_orders: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState({
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear()
+  });
+
+  const currentUser = authState.user;
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchRevenueData();
+      fetchOrderSummary();
+    }
+  }, [currentUser, selectedPeriod]);
+
+  const fetchRevenueData = async () => {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Filter mock data by selected period
+      const filteredData = mockRevenueData.filter(item => 
+        item.period_month === selectedPeriod.month && 
+        item.period_year === selectedPeriod.year
+      );
+      
+      setRevenueData(filteredData);
+    } catch (error) {
+      console.error('Error fetching revenue data:', error);
+      toast.error('Không thể tải dữ liệu doanh thu');
+    }
+  };
+
+  const fetchOrderSummary = async () => {
+    try {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setOrderSummary(mockOrderSummary);
+    } catch (error) {
+      console.error('Error fetching order summary:', error);
+      toast.error('Không thể tải tổng quan đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -48,23 +169,25 @@ export default function StatsPage() {
     }).format(amount);
   };
 
-  const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
-  const currentMonth = new Date().getMonth() + 1;
+  const months = [
+    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+  ];
 
-  // Calculate stats
-  const totalCommissions = commissions.reduce((sum, c) => sum + c.amount, 0);
-  const paidCommissions = commissions.filter(c => c.paid).reduce((sum, c) => sum + c.amount, 0);
-  const pendingCommissions = commissions.filter(c => !c.paid).reduce((sum, c) => sum + c.amount, 0);
-  const currentMonthCommissions = commissions.filter(c => c.month === currentMonth).reduce((sum, c) => sum + c.amount, 0);
+  // Calculate current period stats
+  const currentPeriodRevenue = revenueData.reduce((sum, item) => sum + parseFloat(item.revenue_amount.toString()), 0);
+  const currentPeriodCommission = revenueData.reduce((sum, item) => sum + parseFloat(item.commission_amount?.toString() || '0'), 0);
 
-  // Monthly data for chart
-  const monthlyData = months.map((month, index) => {
-    const monthCommissions = commissions.filter(c => c.month === index + 1);
-    const total = monthCommissions.reduce((sum, c) => sum + c.amount, 0);
-    return { month, amount: total };
-  });
-
-  const maxAmount = Math.max(...monthlyData.map(d => d.amount));
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,12 +202,38 @@ export default function StatsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">Thống kê</h1>
-          <button className="p-2">
+          <h1 className="text-xl font-semibold text-gray-900">Thống kê doanh thu</h1>
+          <button 
+            onClick={() => window.location.href = '/orders'}
+            className="p-2"
+          >
             <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </button>
+        </div>
+      </div>
+
+      {/* Period Selector */}
+      <div className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center space-x-4">
+          <select
+            value={selectedPeriod.month}
+            onChange={(e) => setSelectedPeriod(prev => ({ ...prev, month: parseInt(e.target.value) }))}
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            {months.map((month, index) => (
+              <option key={index} value={index + 1}>{month}</option>
+            ))}
+          </select>
+          <select
+            value={selectedPeriod.year}
+            onChange={(e) => setSelectedPeriod(prev => ({ ...prev, year: parseInt(e.target.value) }))}
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <option value={2024}>2024</option>
+            <option value={2025}>2025</option>
+          </select>
         </div>
       </div>
 
@@ -95,28 +244,28 @@ export default function StatsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Tổng hoa hồng</p>
-                  <p className="text-lg font-bold text-gray-900">{formatCurrency(totalCommissions)}</p>
+                  <p className="text-xs text-gray-600">Tổng đơn hàng</p>
+                  <p className="text-lg font-bold text-gray-900">{orderSummary.total_orders}</p>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Tháng này</p>
-                  <p className="text-lg font-bold text-gray-900">{formatCurrency(currentMonthCommissions)}</p>
+                  <p className="text-xs text-gray-600">Tổng doanh thu</p>
+                  <p className="text-lg font-bold text-gray-900">{formatCurrency(orderSummary.total_revenue)}</p>
                 </div>
               </div>
             </div>
@@ -125,83 +274,105 @@ export default function StatsPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="flex items-center">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-600">Đã thanh toán</p>
-                  <p className="text-lg font-bold text-gray-900">{formatCurrency(paidCommissions)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg p-4 shadow-sm">
-              <div className="flex items-center">
                 <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
                   <svg className="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-600">Chờ thanh toán</p>
-                  <p className="text-lg font-bold text-gray-900">{formatCurrency(pendingCommissions)}</p>
+                  <p className="text-xs text-gray-600">Đang xử lý</p>
+                  <p className="text-lg font-bold text-gray-900">{orderSummary.pending_orders}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600">Đã giao</p>
+                  <p className="text-lg font-bold text-gray-900">{orderSummary.delivered_orders}</p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Chart */}
-        <div className="mx-4 bg-white rounded-lg p-4 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Biểu đồ hoa hồng theo tháng</h3>
-          <div className="flex items-end justify-between h-40 space-x-2">
-            {monthlyData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div 
-                  className="w-full bg-red-600 rounded-t transition-all duration-300"
-                  style={{ 
-                    height: maxAmount > 0 ? `${(data.amount / maxAmount) * 120}px` : '2px',
-                    minHeight: '2px'
-                  }}
-                ></div>
-                <p className="text-xs text-gray-600 mt-2">{data.month}</p>
+          {/* Current Period Stats */}
+          {currentUser.role_id === 2 && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Doanh thu kỳ này</p>
+                    <p className="text-lg font-bold text-gray-900">{formatCurrency(currentPeriodRevenue)}</p>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Hoa hồng kỳ này</p>
+                    <p className="text-lg font-bold text-gray-900">{formatCurrency(currentPeriodCommission)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Commission History */}
+        {/* Revenue History */}
         <div className="mx-4 mt-4 bg-white rounded-lg shadow-sm">
           <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Lịch sử hoa hồng</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Lịch sử đơn hàng</h3>
           </div>
           <div className="divide-y divide-gray-200">
             {loading ? (
               <div className="flex justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
               </div>
-            ) : commissions.length === 0 ? (
+            ) : revenueData.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600">Chưa có dữ liệu hoa hồng</p>
+                <p className="text-gray-600">Chưa có dữ liệu doanh thu trong kỳ này</p>
               </div>
             ) : (
-              commissions.map((commission) => (
-                <div key={commission.id} className="p-4">
+              revenueData.map((item) => (
+                <div key={item.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-gray-900">{commission.contractName}</p>
-                      <p className="text-sm text-gray-600">Tháng {commission.month}/2024</p>
+                      <p className="font-medium text-gray-900">{item.order.order_code}</p>
+                      <p className="text-sm text-gray-600">{item.order.customer_name}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(item.order.order_date).toLocaleDateString('vi-VN')}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">{formatCurrency(commission.amount)}</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(item.revenue_amount)}</p>
+                      {currentUser.role_id === 2 && item.commission_amount && (
+                        <p className="text-sm text-green-600">
+                          Hoa hồng: {formatCurrency(item.commission_amount)}
+                        </p>
+                      )}
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        commission.paid 
+                        item.status === 'recorded' 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {commission.paid ? 'Đã thanh toán' : 'Chờ thanh toán'}
+                        {item.status === 'recorded' ? 'Đã ghi nhận' : 'Chờ xử lý'}
                       </span>
                     </div>
                   </div>
