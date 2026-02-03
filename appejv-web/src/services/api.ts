@@ -1,4 +1,4 @@
-import { API_CONFIG, API_ENDPOINTS, buildUrl, handleApiError } from '@/lib/api-config';
+import { API_CONFIG, buildUrl, handleApiError } from '@/lib/api-config';
 
 // Types
 interface ApiResponse<T> {
@@ -59,9 +59,9 @@ class ApiClient {
     }
   }
 
-  async get<T>(endpoint: string, params?: Record<string, unknown>): Promise<T> {
-    const url = params ? buildUrl(endpoint, params) : `${this.baseURL}${endpoint}`;
-    return this.request<T>(url.replace(this.baseURL, ''));
+  async get<T>(endpoint: string, options?: { params?: Record<string, unknown> }): Promise<T> {
+    const url = options?.params ? buildUrl(endpoint, options.params) : endpoint;
+    return this.request<T>(url);
   }
 
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
@@ -78,6 +78,13 @@ class ApiClient {
     });
   }
 
+  async patch<T>(endpoint: string, data?: unknown): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
   async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'DELETE',
@@ -88,144 +95,127 @@ class ApiClient {
 // Create API client instance
 const apiClient = new ApiClient();
 
-// Sector API Service
-export const sectorService = {
-  async getAllSectors() {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.SECTORS.LIST, { include_products: 'true' });
-      return response;
-    } catch (error) {
-      console.error('Error fetching sectors:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getSectorById(sectorId: number) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.SECTORS.DETAIL(sectorId));
-      return response;
-    } catch (error) {
-      console.error('Error fetching sector:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getSectorCombos(sectorId: number) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.SECTORS.COMBOS(sectorId));
-      return response;
-    } catch (error) {
-      console.error('Error fetching sector combos:', error);
-      throw handleApiError(error);
-    }
-  },
-};
-
-// Product API Service
-export const productService = {
-  async getAllProducts(params?: { sector_id?: number; search?: string; page?: number; limit?: number }) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.LIST, params);
-      return response;
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getProductById(productId: string) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.DETAIL(productId));
-      return response;
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async searchProducts(query: string, params?: { sector_id?: number; page?: number; limit?: number }) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.PRODUCTS.SEARCH, { q: query, ...params });
-      return response;
-    } catch (error) {
-      console.error('Error searching products:', error);
-      throw handleApiError(error);
-    }
-  },
-};
-
-// Content API Service
-export const contentService = {
-  async getAllContents(params?: { sector_id?: number; category?: string; brand?: string; page?: number; limit?: number }) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.CONTENT.LIST, params);
-      return response;
-    } catch (error) {
-      console.error('Error fetching contents:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getContentById(contentId: string) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.CONTENT.DETAIL(contentId));
-      return response;
-    } catch (error) {
-      console.error('Error fetching content:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getContentsByBrand(brand: string, params?: { page?: number; limit?: number }) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.CONTENT.BY_BRAND(brand), params);
-      return response;
-    } catch (error) {
-      console.error('Error fetching contents by brand:', error);
-      throw handleApiError(error);
-    }
-  },
-};
-
-// User API Service
-export const userService = {
-  async getAllUsers(params?: { role_id?: number; search?: string; page?: number; limit?: number }) {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, params);
-      return response;
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async getUserProfile() {
-    try {
-      const response = await apiClient.get(API_ENDPOINTS.USERS.PROFILE);
-      return response;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      throw handleApiError(error);
-    }
-  },
-
-  async updateUserProfile(data: unknown) {
-    try {
-      const response = await apiClient.put(API_ENDPOINTS.USERS.UPDATE_PROFILE, data);
-      return response;
-    } catch (error) {
-      console.error('Error updating user profile:', error);
-      throw handleApiError(error);
-    }
-  },
-};
-
-// Export all services
+// Generic API service
 export const apiService = {
-  sectors: sectorService,
-  products: productService,
-  contents: contentService,
-  users: userService,
+  // Generic methods
+  get: <T>(endpoint: string, options?: { params?: Record<string, unknown> }) => 
+    apiClient.get<T>(endpoint, options),
+  post: <T>(endpoint: string, data?: unknown) => 
+    apiClient.post<T>(endpoint, data),
+  put: <T>(endpoint: string, data?: unknown) => 
+    apiClient.put<T>(endpoint, data),
+  patch: <T>(endpoint: string, data?: unknown) => 
+    apiClient.patch<T>(endpoint, data),
+  delete: <T>(endpoint: string) => 
+    apiClient.delete<T>(endpoint),
+
+  // Users
+  getUsers: (params?: Record<string, unknown>) => apiService.get('/users', { params }),
+  getUserById: (id: number) => apiService.get(`/users/${id}`),
+  updateUser: (id: number, data: Record<string, unknown>) => apiService.put(`/users/${id}`, data),
+
+  // Products
+  getProducts: (params?: Record<string, unknown>) => apiService.get('/products', { params }),
+  getProductById: (id: number) => apiService.get(`/products/${id}`),
+
+  // Sectors
+  getSectors: (params?: Record<string, unknown>) => apiService.get('/sectors', { params }),
+  getSectorById: (id: number) => apiService.get(`/sectors/${id}`),
+
+  // Contents
+  getContents: (params?: Record<string, unknown>) => apiService.get('/contents', { params }),
+  getContentById: (id: number) => apiService.get(`/contents/${id}`),
+
+  // Quotations
+  getQuotations: (params?: Record<string, unknown>) => apiService.get('/quotations', { params }),
+  getQuotationById: (id: number) => apiService.get(`/quotations/${id}`),
+  createQuotation: (data: Record<string, unknown>) => apiService.post('/quotations', data),
+  updateQuotation: (id: number, data: Record<string, unknown>) => apiService.put(`/quotations/${id}`, data),
+
+  // Contacts
+  getContacts: (params?: Record<string, unknown>) => apiService.get('/contacts', { params }),
+  getContactById: (id: number) => apiService.get(`/contacts/${id}`),
+  createContact: (data: Record<string, unknown>) => apiService.post('/contacts', data),
+  updateContact: (id: number, data: Record<string, unknown>) => apiService.put(`/contacts/${id}`, data),
+
+  // Contracts
+  getContracts: (params?: Record<string, unknown>) => apiService.get('/contracts', { params }),
+  getContractById: (id: number) => apiService.get(`/contracts/${id}`),
+  createContract: (data: Record<string, unknown>) => apiService.post('/contracts', data),
+
+  // Commissions
+  getCommissions: (params?: Record<string, unknown>) => apiService.get('/commissions', { params }),
+  getCommissionById: (id: number) => apiService.get(`/commissions/${id}`),
+  createCommission: (data: Record<string, unknown>) => apiService.post('/commissions', data),
+
+  // Notifications
+  getNotifications: (params?: Record<string, unknown>) => apiService.get('/notifications', { params }),
+  markNotificationsAsRead: (ids: number[]) => apiService.patch('/notifications', { ids, read_at: new Date().toISOString() }),
+  createNotification: (data: Record<string, unknown>) => apiService.post('/notifications', data),
+
+  // Orders
+  getOrders: (params?: Record<string, unknown>) => apiService.get('/orders', { params }),
+  getOrderById: (id: number) => apiService.get(`/orders/${id}`),
+  createOrder: (data: Record<string, unknown>) => apiService.post('/orders', data),
+  updateOrder: (id: number, data: Record<string, unknown>) => apiService.put(`/orders/${id}`, data),
+  deleteOrder: (id: number) => apiService.delete(`/orders/${id}`),
+
+  // Payments
+  getPayments: (params?: Record<string, unknown>) => apiService.get('/payments', { params }),
+  createPayment: (data: Record<string, unknown>) => apiService.post('/payments', data),
+
+  // Delivery Tracking
+  getDeliveryTracking: (params?: Record<string, unknown>) => apiService.get('/delivery-tracking', { params }),
+  createDeliveryTracking: (data: Record<string, unknown>) => apiService.post('/delivery-tracking', data),
+
+  // Accounts Receivable
+  getAccountsReceivable: (params?: Record<string, unknown>) => apiService.get('/accounts-receivable', { params }),
+  updateAccountsReceivable: (data: Record<string, unknown>) => apiService.put('/accounts-receivable', data),
+
+  // Revenue Tracking
+  getRevenueTracking: (params?: Record<string, unknown>) => apiService.get('/revenue-tracking', { params }),
+  createRevenueTracking: (data: Record<string, unknown>) => apiService.post('/revenue-tracking', data),
+  getRevenueSummary: (data: Record<string, unknown>) => apiService.put('/revenue-tracking', data),
+
+  // Inventory Management
+  getProductInventory: (productId: string) => apiService.get(`/products/${productId}/inventory`),
+  getMultipleProductInventory: (productIds: string[]) => apiService.post('/inventory/bulk', { product_ids: productIds }),
+  validateInventoryForOrder: (items: { product_id: string; quantity: number }[]) => 
+    apiService.post('/inventory/validate', { items }),
+  updateProductInventory: (productId: string, data: { quantity_change: number; reason: string }) => 
+    apiService.put(`/products/${productId}/inventory`, data),
+
+  // Order Management
+  getOrdersList: () => apiService.getOrders(),
+  getOrderDetails: (orderId: string) => apiService.getOrderById(parseInt(orderId)),
+  createOrderWithValidation: (data: Record<string, unknown>) => apiService.post('/orders/create-with-validation', data),
+  updateOrderStatus: (orderId: string, status: string) => 
+    apiService.patch(`/orders/${orderId}/status`, { status }),
+};
+
+// Legacy services for backward compatibility
+export const sectorService = {
+  getAllSectors: () => apiService.getSectors({ include_products: 'true' }),
+  getSectorById: (id: number) => apiService.getSectorById(id),
+  getSectorCombos: (id: number) => apiService.getSectorById(id),
+};
+
+export const productService = {
+  getAllProducts: (params?: Record<string, unknown>) => apiService.getProducts(params),
+  getProductById: (id: string) => apiService.getProductById(parseInt(id)),
+  searchProducts: (query: string, params?: Record<string, unknown>) => apiService.getProducts({ search: query, ...params }),
+};
+
+export const contentService = {
+  getAllContents: (params?: Record<string, unknown>) => apiService.getContents(params),
+  getContentById: (id: string) => apiService.getContentById(parseInt(id)),
+  getContentsByBrand: (brand: string, params?: Record<string, unknown>) => apiService.getContents({ brand, ...params }),
+};
+
+export const userService = {
+  getAllUsers: (params?: Record<string, unknown>) => apiService.getUsers(params),
+  getUserProfile: () => apiService.get('/users/profile'),
+  updateUserProfile: (data: Record<string, unknown>) => apiService.put('/users/profile', data),
 };
 
 export default apiService;

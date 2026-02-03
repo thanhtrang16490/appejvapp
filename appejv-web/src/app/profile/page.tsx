@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import BottomNavigation from '@/components/layout/BottomNavigation';
 import { AvatarFrame } from '@/components/ui';
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { authState, logout, updateUser } = useAuth();
   const toast = useToast();
   const [showEditModal, setShowEditModal] = useState(false);
@@ -32,8 +34,8 @@ export default function ProfilePage() {
     try {
       await logout();
       toast.success('Đăng xuất thành công');
-      window.location.href = '/login';
-    } catch (error) {
+      router.push('/login');
+    } catch {
       toast.error('Có lỗi xảy ra khi đăng xuất');
     }
   };
@@ -47,8 +49,27 @@ export default function ProfilePage() {
       } else {
         toast.error('Không thể cập nhật thông tin');
       }
-    } catch (error) {
+    } catch {
       toast.error('Có lỗi xảy ra khi cập nhật thông tin');
+    }
+  };
+
+  const handleBackClick = () => {
+    console.log('Back button clicked'); // Debug log
+    try {
+      // Thử sử dụng window.history.back() trước
+      if (typeof window !== 'undefined') {
+        console.log('Using window.history.back()'); // Debug log
+        window.history.back();
+      } else {
+        console.log('Fallback to router.push(/)'); // Debug log
+        // Fallback về trang chủ
+        router.push('/');
+      }
+    } catch {
+      console.error('Error navigating back');
+      // Fallback về trang chủ nếu có lỗi
+      router.push('/');
     }
   };
 
@@ -56,6 +77,7 @@ export default function ProfilePage() {
     setShowSupportModal(true);
   };
 
+  // Loading state check
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -82,8 +104,9 @@ export default function ProfilePage() {
         
         {/* Back Button */}
         <button 
-          onClick={() => window.location.href = '/'}
-          className="absolute top-4 left-4 z-10 w-10 h-10 bg-black bg-opacity-30 rounded-full flex items-center justify-center text-white hover:bg-opacity-50"
+          onClick={handleBackClick}
+          className="absolute top-4 left-4 z-50 w-10 h-10 bg-black bg-opacity-30 rounded-full flex items-center justify-center text-white hover:bg-opacity-50 cursor-pointer"
+          style={{ pointerEvents: 'auto' }}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -441,9 +464,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
-      {/* Bottom Navigation */}
-      <BottomNavigation user={currentUser} currentPage="profile" />
     </div>
   );
 }

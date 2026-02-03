@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/useToast';
 
 interface Order {
   id: string;
@@ -113,11 +112,7 @@ export default function OrderManagement({
   loading = false 
 }: OrderManagementProps) {
   const { authState } = useAuth();
-  const toast = useToast();
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filterStatus, setFilterStatus] = useState<OrderStatus | 'all'>('all');
-
-  const currentUser = authState.user;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -172,7 +167,6 @@ export default function OrderManagement({
   };
 
   const handleOrderClick = (order: Order) => {
-    setSelectedOrder(order);
     if (onOrderSelect) {
       onOrderSelect(order.id);
     }

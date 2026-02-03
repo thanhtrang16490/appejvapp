@@ -1,7 +1,7 @@
 'use client';
 
 import { Sector } from '@/types';
-import { PlaceholderFrame } from '@/components/ui';
+import { PlaceholderFrame, InventoryDisplay } from '@/components/ui';
 
 interface ProductSectionProps {
   sector: Sector;
@@ -77,9 +77,25 @@ export default function ProductSection({ sector }: ProductSectionProps) {
                 <h4 className="text-sm font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem]">
                   {product.name}
                 </h4>
-                <p className="text-sm font-bold text-red-600">
+                <p className="text-sm font-bold text-red-600 mb-1">
                   {formatCurrency(product.price)}
                 </p>
+                {/* Inventory info */}
+                {product.stock_quantity !== undefined ? (
+                  <InventoryDisplay 
+                    stockQuantity={product.stock_quantity}
+                    minStockLevel={product.min_stock_level || 0}
+                    size="sm"
+                    unit={product.unit || 'bao'}
+                    showWarning={false}
+                  />
+                ) : (
+                  <InventoryDisplay 
+                    stockQuantity={0}
+                    size="sm"
+                    showWarning={false}
+                  />
+                )}
               </div>
             </div>
           ))}

@@ -47,7 +47,7 @@ export const useToast = () => {
     messages: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: unknown) => string);
     }
   ) => {
     return toast.promise(promise, messages);

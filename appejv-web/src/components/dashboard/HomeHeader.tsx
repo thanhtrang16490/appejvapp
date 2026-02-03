@@ -118,7 +118,7 @@ export default function HomeHeader({ user }: HomeHeaderProps) {
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="text-white text-sm mb-1">
-                  Thu nhập dự kiến T{new Date().getMonth() + 1}
+                  Doanh thu dự kiến T{new Date().getMonth() + 1}
                 </p>
                 <div className="flex items-center">
                   <p className="text-white text-2xl font-bold mr-2">

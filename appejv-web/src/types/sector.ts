@@ -7,6 +7,10 @@ export interface Combo {
   image: string | null;
   sector_id: number;
   product_ids: number[];
+  stock_quantity?: number;
+  min_stock_level?: number;
+  max_stock_level?: number;
+  unit?: string;
   created_at: string;
   updated_at: string;
 }
@@ -32,6 +36,10 @@ export interface Product {
   category_id: number;
   sector_id: number;
   brand_id: number;
+  stock_quantity?: number;
+  min_stock_level?: number;
+  max_stock_level?: number;
+  unit?: string;
   created_at: string;
   updated_at: string;
 }

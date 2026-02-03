@@ -16,16 +16,16 @@ interface NavItem {
   href: string;
 }
 
-export default function BottomNavigation({ user, currentPage = 'home' }: BottomNavigationProps) {
+export default function BottomNavigation({ user, currentPage = 'index' }: BottomNavigationProps) {
   const [activeTab, setActiveTab] = useState(currentPage);
 
   const isCustomer = user?.role_id === 3;
   const isPublic = user?.role_id === 4;
 
-  // Navigation items for regular users (agents/admin)
+  // Navigation items for regular users (agents/admin) - matching mobile app RegularTabBar
   const regularNavItems: NavItem[] = [
     {
-      id: 'home',
+      id: 'index',
       name: 'index',
       icon: '/images/nav-icon-1.png',
       label: 'Trang chủ',
@@ -35,7 +35,7 @@ export default function BottomNavigation({ user, currentPage = 'home' }: BottomN
       id: 'account',
       name: 'account',
       icon: '/images/nav-icon-2.png',
-      label: 'Khách hàng',
+      label: 'Khách hàng tiềm năng',
       href: '/account',
     },
     {
@@ -53,15 +53,15 @@ export default function BottomNavigation({ user, currentPage = 'home' }: BottomN
       href: '/stats',
     },
     {
-      id: 'gallery',
-      name: 'gallery',
+      id: 'orders',
+      name: 'orders',
       icon: '/images/nav-icon-5.png',
-      label: 'Thư viện',
-      href: '/gallery',
+      label: 'Đơn hàng',
+      href: '/orders',
     },
   ];
 
-  // Navigation items for customers (role_id = 3)
+  // Navigation items for customers (role_id = 3) - matching mobile app CustomTabBarClient
   const customerNavItems: NavItem[] = [
     {
       id: 'products',
@@ -71,18 +71,11 @@ export default function BottomNavigation({ user, currentPage = 'home' }: BottomN
       href: '/products',
     },
     {
-      id: 'gallery',
-      name: 'gallery',
+      id: 'orders',
+      name: 'orders',
       icon: '/images/nav-icon-5.png',
-      label: 'Thư viện',
-      href: '/gallery',
-    },
-    {
-      id: 'profile',
-      name: 'profile',
-      icon: '/images/nav-icon-2.png',
-      label: 'Hồ sơ',
-      href: '/profile',
+      label: 'Đơn hàng',
+      href: '/orders',
     },
   ];
 
@@ -96,11 +89,11 @@ export default function BottomNavigation({ user, currentPage = 'home' }: BottomN
       href: '/products',
     },
     {
-      id: 'gallery',
-      name: 'gallery',
+      id: 'orders',
+      name: 'orders',
       icon: '/images/nav-icon-5.png',
-      label: 'Thư viện',
-      href: '/gallery',
+      label: 'Đơn hàng',
+      href: '/orders',
     },
     {
       id: 'login',
@@ -132,22 +125,20 @@ export default function BottomNavigation({ user, currentPage = 'home' }: BottomN
               className="flex-1 flex flex-col items-center justify-center py-2 px-1"
             >
               <div
-                className={`flex items-center justify-center p-3 rounded-full transition-colors ${
-                  isActive ? 'bg-red-50' : ''
+                className={`flex items-center justify-center transition-all ${
+                  isActive 
+                    ? 'bg-red-50 rounded-full p-3' 
+                    : 'p-2'
                 }`}
               >
                 <img
                   src={item.icon}
                   alt={item.label}
-                  className={`w-6 h-6 transition-all ${
-                    isActive 
-                      ? 'filter brightness-0 saturate-100' 
-                      : 'filter brightness-0 saturate-100 opacity-60'
-                  }`}
+                  className="w-6 h-6 transition-all"
                   style={{
                     filter: isActive 
                       ? 'brightness(0) saturate(100%) invert(11%) sepia(100%) saturate(7426%) hue-rotate(357deg) brightness(95%) contrast(118%)'
-                      : 'brightness(0) saturate(100%) invert(60%) sepia(8%) saturate(1126%) hue-rotate(201deg) brightness(91%) contrast(87%)'
+                      : 'brightness(0) saturate(100%) invert(48%) sepia(13%) saturate(1126%) hue-rotate(201deg) brightness(91%) contrast(87%)'
                   }}
                 />
               </div>

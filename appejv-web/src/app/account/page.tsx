@@ -56,8 +56,6 @@ const defaultUser: User = {
   address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
 };
 
-type TabType = 'all';
-
 export default function AccountPage() {
   const [currentUser] = useState<User>(defaultUser);
   const [customers] = useState<Customer[]>(mockCustomers);

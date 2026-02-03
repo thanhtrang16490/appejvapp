@@ -1,510 +1,177 @@
-'use client';
+'use client'
 
-import { useState, useCallback } from 'react';
-import { User } from '@/types';
-import BottomNavigation from '@/components/layout/BottomNavigation';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { useToast } from '@/hooks/useToast'
+import { apiService } from '@/services/api'
 
-// Default user
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
-
-interface CustomerData {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-interface QuotationStep {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  current: boolean;
+interface Quotation {
+  id: number
+  customer_name: string
+  customer_phone: string
+  total_price: number
+  status: string
+  created_at: string
+  quotation_items?: any[]
 }
 
 export default function QuotationPage() {
-  const [currentUser] = useState<User>(defaultUser);
-  const [customerId, setCustomerId] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [customerExists, setCustomerExists] = useState<boolean | null>(null);
-  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
+  const router = useRouter()
+  const { user } = useAuth()
+  const { showToast } = useToast()
+  const [quotations, setQuotations] = useState<Quotation[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const steps: QuotationStep[] = [
-    {
-      id: 1,
-      title: 'Thông tin khách hàng',
-      description: 'Nhập mã khách hàng hoặc tạo mới',
-      completed: false,
-      current: currentStep === 1,
-    },
-    {
-      id: 2,
-      title: 'Chọn sản phẩm',
-      description: 'Lựa chọn sản phẩm cho báo giá',
-      completed: false,
-      current: currentStep === 2,
-    },
-    {
-      id: 3,
-      title: 'Thông tin cơ bản',
-      description: 'Điền thông tin chi tiết',
-      completed: false,
-      current: currentStep === 3,
-    },
-    {
-      id: 4,
-      title: 'Chi tiết báo giá',
-      description: 'Xem lại và chỉnh sửa',
-      completed: false,
-      current: currentStep === 4,
-    },
-    {
-      id: 5,
-      title: 'Hoàn thành',
-      description: 'Xác nhận và gửi báo giá',
-      completed: false,
-      current: currentStep === 5,
-    },
-  ];
+  useEffect(() => {
+    fetchQuotations()
+  }, [])
 
-  // Debounced function to check customer existence
-  const checkCustomerExistence = useCallback(
-    debounce(async (id: string) => {
-      if (!id || id.trim() === '') {
-        setIsLoading(false);
-        setCustomerExists(null);
-        setCustomerData(null);
-        setError(null);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-      setCustomerExists(null);
-      setCustomerData(null);
-
-      try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock customer data
-        const mockCustomers = [
-          { id: 'KH001', name: 'Nguyễn Văn A', phone: '0123456789', address: '123 ABC Street' },
-          { id: 'KH002', name: 'Trần Thị B', phone: '0987654321', address: '456 XYZ Street' },
-        ];
-
-        const customer = mockCustomers.find(c => c.id === id.trim().toUpperCase());
-        
-        if (customer) {
-          setCustomerExists(true);
-          setCustomerData(customer);
-        } else {
-          setCustomerExists(false);
-          setCustomerData(null);
-        }
-      } catch (err: unknown) {
-        console.error('API call failed:', err);
-        setError('Không thể kiểm tra mã khách hàng. Vui lòng thử lại.');
-        setCustomerExists(null);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 500),
-    []
-  );
-
-  const handleCustomerIdChange = (text: string) => {
-    const upperCaseText = text.toUpperCase();
-    setCustomerId(upperCaseText);
-    checkCustomerExistence(upperCaseText);
-  };
-
-  const handleNextStep = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
+  const fetchQuotations = async () => {
+    try {
+      setLoading(true)
+      const params = user?.role_id === 2 ? { agent_id: user.id } : {}
+      const response = await apiService.get('/quotations', { params })
+      setQuotations(response.data || [])
+    } catch (error) {
+      console.error('Error fetching quotations:', error)
+      showToast('Không thể tải danh sách báo giá', 'error')
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'draft': return 'bg-gray-100 text-gray-800'
+      case 'sent': return 'bg-blue-100 text-blue-800'
+      case 'approved': return 'bg-green-100 text-green-800'
+      case 'rejected': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
-  };
+  }
 
-  const handleCreateQuotation = () => {
-    if (isLoading || error) {
-      return;
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'draft': return 'Nháp'
+      case 'sent': return 'Đã gửi'
+      case 'approved': return 'Đã duyệt'
+      case 'rejected': return 'Từ chối'
+      default: return status
     }
-    
-    alert('Tạo báo giá thành công!');
-    // Reset form
-    setCustomerId('');
-    setPhoneNumber('');
-    setCurrentStep(1);
-    setCustomerData(null);
-    setCustomerExists(null);
-  };
+  }
 
-  // Simple debounce function
-  function debounce<T extends unknown[]>(func: (...args: T) => void, wait: number) {
-    let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: T) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      maximumFractionDigits: 0
+    }).format(price)
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white p-4 rounded-lg shadow">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between p-4">
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="p-2"
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Báo giá</h1>
+          <button
+            onClick={() => router.push('/quotation/create')}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
           >
-            <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
+            Tạo báo giá mới
           </button>
-          <h1 className="text-xl font-semibold text-gray-900">Tạo báo giá mới</h1>
-          <div className="w-10"></div>
         </div>
-      </div>
 
-      {/* Progress Steps */}
-      <div className="bg-white p-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
-                step.completed 
-                  ? 'bg-green-500 border-green-500 text-white' 
-                  : step.current 
-                    ? 'bg-red-600 border-red-600 text-white' 
-                    : 'bg-white border-gray-300 text-gray-400'
-              }`}>
-                {step.completed ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <span className="text-sm font-medium">{step.id}</span>
-                )}
-              </div>
-              {index < steps.length - 1 && (
-                <div className={`w-8 h-0.5 mx-2 ${
-                  step.completed ? 'bg-green-500' : 'bg-gray-300'
-                }`}></div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-2">
-          <p className="text-sm font-medium text-gray-900">
-            {steps.find(s => s.current)?.title}
-          </p>
-          <p className="text-xs text-gray-500">
-            {steps.find(s => s.current)?.description}
-          </p>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 p-4 pb-20">
-        {currentStep === 1 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Thông tin khách hàng
-            </h2>
-
-            {/* Customer ID Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mã khách hàng
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={customerId}
-                  onChange={(e) => handleCustomerIdChange(e.target.value)}
-                  placeholder="Nhập mã khách hàng (VD: KH001)"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-                {isLoading && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-red-600"></div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Status Messages */}
-              {error && (
-                <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
-              )}
-              
-              {customerExists === true && customerData && (
-                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-600 font-medium">✓ Khách hàng đã tồn tại</p>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p><strong>Tên:</strong> {customerData.name}</p>
-                    <p><strong>SĐT:</strong> {customerData.phone}</p>
-                    <p><strong>Địa chỉ:</strong> {customerData.address}</p>
-                  </div>
-                </div>
-              )}
-              
-              {customerExists === false && (
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-600 font-medium">ℹ Khách hàng mới</p>
-                  <p className="text-sm text-gray-600">Sẽ tạo thông tin khách hàng mới trong bước tiếp theo</p>
-                </div>
-              )}
-            </div>
-
-            {/* Phone Number Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số điện thoại
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Nhập số điện thoại"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex space-x-3">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleNextStep}
-                disabled={!customerId || isLoading || !!error}
-                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Tiếp tục
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 2 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Chọn sản phẩm
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" className="w-4 h-4 text-red-600" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">Gói thức ăn heo 3 tháng</h3>
-                    <p className="text-sm text-gray-500">Phù hợp cho trang trại nhỏ</p>
-                    <p className="text-lg font-semibold text-red-600">4,500,000 VNĐ</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" className="w-4 h-4 text-red-600" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">Gói thức ăn gà 5 tháng</h3>
-                    <p className="text-sm text-gray-500">Phù hợp cho trang trại vừa</p>
-                    <p className="text-lg font-semibold text-red-600">6,500,000 VNĐ</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handlePrevStep}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Quay lại
-              </button>
-              <button
-                onClick={handleNextStep}
-                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Tiếp tục
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Thông tin cơ bản
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tên khách hàng
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên khách hàng"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Địa chỉ lắp đặt
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Nhập địa chỉ lắp đặt"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Nhập ghi chú (tùy chọn)"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handlePrevStep}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Quay lại
-              </button>
-              <button
-                onClick={handleNextStep}
-                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Tiếp tục
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 4 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Chi tiết báo giá
-            </h2>
-            
-            <div className="space-y-4">
-              <div className="border-b border-gray-200 pb-4">
-                <h3 className="font-medium text-gray-900 mb-2">Thông tin khách hàng</h3>
-                <p className="text-sm text-gray-600">Mã KH: {customerId}</p>
-                <p className="text-sm text-gray-600">SĐT: {phoneNumber}</p>
-              </div>
-              
-              <div className="border-b border-gray-200 pb-4">
-                <h3 className="font-medium text-gray-900 mb-2">Sản phẩm đã chọn</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Gói thức ăn heo 3 tháng</span>
-                    <span className="text-sm font-medium">4,500,000 VNĐ</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="pt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">Tổng cộng:</span>
-                  <span className="text-xl font-bold text-red-600">150,000,000 VNĐ</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handlePrevStep}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Quay lại
-              </button>
-              <button
-                onClick={handleNextStep}
-                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Hoàn thành
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentStep === 5 && (
-          <div className="bg-white rounded-lg p-6 shadow-sm text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        {/* Quotations List */}
+        {quotations.length === 0 ? (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Báo giá đã được tạo thành công!
-            </h2>
-            
-            <p className="text-gray-600 mb-6">
-              Báo giá đã được lưu và sẵn sàng để gửi cho khách hàng.
-            </p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Chưa có báo giá nào</h3>
+            <p className="text-gray-500 mb-4">Tạo báo giá đầu tiên để bắt đầu</p>
+            <button
+              onClick={() => router.push('/quotation/create')}
+              className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Tạo báo giá mới
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {quotations.map((quotation) => (
+              <div
+                key={quotation.id}
+                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => router.push(`/quotation/${quotation.id}`)}
+              >
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        {quotation.customer_name}
+                      </h3>
+                      <p className="text-gray-600">{quotation.customer_phone}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(quotation.status)}`}>
+                      {getStatusText(quotation.status)}
+                    </span>
+                  </div>
 
-            <div className="flex space-x-3">
-              <button
-                onClick={() => window.location.href = '/'}
-                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-              >
-                Về trang chủ
-              </button>
-              <button
-                onClick={handleCreateQuotation}
-                className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Tạo báo giá mới
-              </button>
-            </div>
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-500">
+                      Ngày tạo: {formatDate(quotation.created_at)}
+                    </div>
+                    <div className="text-lg font-bold text-red-600">
+                      {formatPrice(quotation.total_price)}
+                    </div>
+                  </div>
+
+                  {quotation.quotation_items && quotation.quotation_items.length > 0 && (
+                    <div className="mt-3 text-sm text-gray-500">
+                      {quotation.quotation_items.length} sản phẩm
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation user={currentUser} currentPage="quotation" />
     </div>
-  );
+  )
 }

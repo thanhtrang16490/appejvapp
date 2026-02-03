@@ -292,9 +292,6 @@ export default function MenuPage() {
           </div>
         </div>
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation user={currentUser} currentPage="menu" />
     </div>
   );
 }

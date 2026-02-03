@@ -1,327 +1,288 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { User } from '@/types';
-import BottomNavigation from '@/components/layout/BottomNavigation';
-
-// Default user
-const defaultUser: User = {
-  id: 1,
-  role_id: 1,
-  email: 'admin@appejv.vn',
-  password: '123456',
-  created_at: '2024-01-01T00:00:00Z',
-  commission_rate: 10,
-  name: 'Admin User',
-  phone: '0123456789',
-  parent_id: null,
-  total_commission: 1000000,
-  role: { name: 'admin', description: 'Administrator', id: 1 },
-  address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-};
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { useToast } from '@/hooks/useToast'
+import { apiService } from '@/services/api'
 
 interface Notification {
-  id: string;
-  type: 'success' | 'info' | 'warning' | 'alert' | 'commission';
-  title: string;
-  message: string;
-  time: string;
-  icon: string;
-  iconBackground: string;
-  iconColor: string;
-  hasAction: boolean;
-  actionText?: string;
-  read: boolean;
+  id: number
+  type: string
+  title: string
+  message: string
+  read_at: string | null
+  created_at: string
+  data?: any
 }
-
-interface FilterOption {
-  id: string;
-  type: string;
-  label: string;
-  icon: string;
-  iconBackground: string;
-  iconColor: string;
-  selected: boolean;
-}
-
-// Mock notifications data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'success',
-    title: 'Hợp đồng mới được ký',
-    message: 'Khách hàng Nguyễn Văn A đã ký hợp đồng mua thức ăn chăn nuôi 5 tấn',
-    time: '2 giờ trước',
-    icon: '✓',
-    iconBackground: '#ECFDF3',
-    iconColor: '#12B669',
-    hasAction: true,
-    actionText: 'Xem chi tiết',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'commission',
-    title: 'Hoa hồng mới',
-    message: 'Bạn nhận được hoa hồng 2,500,000 VNĐ từ hợp đồng #HD001',
-    time: '5 giờ trước',
-    icon: '💰',
-    iconBackground: '#F9F5FF',
-    iconColor: '#9D76ED',
-    hasAction: true,
-    actionText: 'Xem thống kê',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'info',
-    title: 'Cộng đồng Appejv',
-    message: 'Có 5 bài viết mới trong nhóm "Chia sẻ kinh nghiệm bán hàng"',
-    time: '1 ngày trước',
-    icon: '👥',
-    iconBackground: '#EFF8FF',
-    iconColor: '#2E90FA',
-    hasAction: false,
-    read: true,
-  },
-  {
-    id: '4',
-    type: 'warning',
-    title: 'Bài viết mới',
-    message: 'Appe JV vừa đăng bài viết "Xu hướng dinh dưỡng vật nuôi 2024"',
-    time: '2 ngày trước',
-    icon: '📄',
-    iconBackground: '#FFFAEB',
-    iconColor: '#F79009',
-    hasAction: true,
-    actionText: 'Đọc ngay',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'alert',
-    title: 'Khách hàng tiềm năng',
-    message: 'Bạn có 3 khách hàng tiềm năng chưa liên hệ trong tuần này',
-    time: '3 ngày trước',
-    icon: '👤',
-    iconBackground: '#FFECED',
-    iconColor: '#ED1C24',
-    hasAction: true,
-    actionText: 'Xem danh sách',
-    read: true,
-  },
-];
-
-// Filter options
-const filterOptions: FilterOption[] = [
-  {
-    id: '1',
-    type: 'success',
-    label: 'Hợp đồng',
-    icon: '✓',
-    iconBackground: '#ECFDF3',
-    iconColor: '#12B669',
-    selected: false,
-  },
-  {
-    id: '2',
-    type: 'commission',
-    label: 'Hoa hồng',
-    icon: '💰',
-    iconBackground: '#F9F5FF',
-    iconColor: '#9D76ED',
-    selected: false,
-  },
-  {
-    id: '3',
-    type: 'info',
-    label: 'Cộng đồng',
-    icon: '👥',
-    iconBackground: '#EFF8FF',
-    iconColor: '#2E90FA',
-    selected: false,
-  },
-  {
-    id: '4',
-    type: 'warning',
-    label: 'Bài viết',
-    icon: '📄',
-    iconBackground: '#FFFAEB',
-    iconColor: '#F79009',
-    selected: false,
-  },
-  {
-    id: '5',
-    type: 'alert',
-    label: 'Khách hàng',
-    icon: '👤',
-    iconBackground: '#FFECED',
-    iconColor: '#ED1C24',
-    selected: false,
-  },
-];
 
 export default function NotificationsPage() {
-  const [currentUser] = useState<User>(defaultUser);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [filters, setFilters] = useState<FilterOption[]>(filterOptions);
-  const [showFilterModal, setShowFilterModal] = useState(false);
+  const router = useRouter()
+  const { user } = useAuth()
+  const { showToast } = useToast()
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
-  const toggleFilter = (filterId: string) => {
-    setFilters(prev => prev.map(filter => 
-      filter.id === filterId 
-        ? { ...filter, selected: !filter.selected }
-        : filter
-    ));
-  };
+  useEffect(() => {
+    fetchNotifications()
+  }, [filter])
 
-  const getFilteredNotifications = () => {
-    const selectedFilters = filters.filter(f => f.selected);
-    if (selectedFilters.length === 0) {
-      return notifications;
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true)
+      const params: any = { limit: 100 }
+      
+      if (user) {
+        params.user_id = user.id
+      }
+      
+      if (filter === 'unread') {
+        params.unread_only = 'true'
+      }
+
+      const response = await apiService.getNotifications(params)
+      setNotifications(response.data || [])
+    } catch (error) {
+      console.error('Error fetching notifications:', error)
+      showToast('Không thể tải thông báo', 'error')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  const markAsRead = async (notificationIds: number[]) => {
+    try {
+      await apiService.markNotificationsAsRead(notificationIds)
+      setNotifications(prev =>
+        prev.map(notification =>
+          notificationIds.includes(notification.id)
+            ? { ...notification, read_at: new Date().toISOString() }
+            : notification
+        )
+      )
+    } catch (error) {
+      console.error('Error marking notifications as read:', error)
+      showToast('Không thể cập nhật trạng thái thông báo', 'error')
+    }
+  }
+
+  const markAllAsRead = async () => {
+    const unreadIds = notifications.filter(n => !n.read_at).map(n => n.id)
+    if (unreadIds.length > 0) {
+      await markAsRead(unreadIds)
+      showToast('Đã đánh dấu tất cả thông báo là đã đọc', 'success')
+    }
+  }
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'quotation':
+        return (
+          <div className="p-2 bg-blue-100 rounded-full">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+        )
+      case 'contract':
+        return (
+          <div className="p-2 bg-green-100 rounded-full">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        )
+      case 'commission':
+        return (
+          <div className="p-2 bg-yellow-100 rounded-full">
+            <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </div>
+        )
+      case 'contact':
+        return (
+          <div className="p-2 bg-purple-100 rounded-full">
+            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+        )
+      default:
+        return (
+          <div className="p-2 bg-gray-100 rounded-full">
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        )
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
     
-    const selectedTypes = selectedFilters.map(f => f.type);
-    return notifications.filter(notification => 
-      selectedTypes.includes(notification.type)
-    );
-  };
+    if (diffInHours < 1) {
+      return 'Vừa xong'
+    } else if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`
+    } else if (diffInHours < 48) {
+      return 'Hôm qua'
+    } else {
+      return date.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    }
+  }
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => prev.map(notification =>
-      notification.id === notificationId
-        ? { ...notification, read: true }
-        : notification
-    ));
-  };
+  const filteredNotifications = notifications.filter(notification => {
+    if (filter === 'unread') return !notification.read_at
+    return true
+  })
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
-  };
+  const unreadCount = notifications.filter(n => !n.read_at).length
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-  const filteredNotifications = getFilteredNotifications();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-white p-4 rounded-lg shadow">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between p-4">
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="p-2"
-          >
-            <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div className="flex-1 text-center">
-            <h1 className="text-xl font-semibold text-gray-900">Thông báo</h1>
-            {unreadCount > 0 && (
-              <p className="text-sm text-gray-500">{unreadCount} thông báo chưa đọc</p>
-            )}
-          </div>
-          <button 
-            onClick={() => setShowFilterModal(true)}
-            className="p-2"
-          >
-            <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Action Bar */}
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-200">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              {filteredNotifications.length} thông báo
-            </span>
-            {filters.some(f => f.selected) && (
-              <div className="flex items-center space-x-2">
-                {filters.filter(f => f.selected).map(filter => (
-                  <span
-                    key={filter.id}
-                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    style={{ 
-                      backgroundColor: filter.iconBackground, 
-                      color: filter.iconColor 
-                    }}
-                  >
-                    <span className="mr-1">{filter.icon}</span>
-                    {filter.label}
-                  </span>
-                ))}
-              </div>
-            )}
+    <div className="min-h-screen bg-gray-50 p-4 pb-20">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.back()}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Thông báo
+              {unreadCount > 0 && (
+                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  {unreadCount}
+                </span>
+              )}
+            </h1>
           </div>
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="text-sm text-red-600 hover:text-red-700"
+              className="text-sm text-red-600 hover:text-red-700 font-medium"
             >
               Đánh dấu tất cả đã đọc
             </button>
           )}
         </div>
-      </div>
 
-      {/* Notifications List */}
-      <div className="flex-1 pb-20">
+        {/* Filters */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-red-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Tất cả ({notifications.length})
+          </button>
+          <button
+            onClick={() => setFilter('unread')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'unread'
+                ? 'bg-red-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Chưa đọc ({unreadCount})
+          </button>
+        </div>
+
+        {/* Notifications List */}
         {filteredNotifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4.828 4.828A4 4 0 015.5 4H9v1H5.5a3 3 0 00-2.121.879l-.707.707A1 1 0 012 7.414V11H1V7.414a2 2 0 01.586-1.414l.707-.707A5 5 0 015.5 3H9a1 1 0 011 1v7a1 1 0 01-1 1H5.5a3 3 0 00-2.121.879l-.707.707A1 1 0 012 13.414V17H1v-3.586a2 2 0 01.586-1.414l.707-.707A5 5 0 015.5 11H8V4a2 2 0 012-2h4.5a5 5 0 013.207 1.293l.707.707A2 2 0 0119 5.414V9h-1V5.414a1 1 0 00-.293-.707l-.707-.707A4 4 0 0014.5 3H10a1 1 0 00-1 1v7h4.5a4 4 0 012.828 1.172l.707.707A1 1 0 0117 13.586V17h-1v-3.414a2 2 0 00-.586-1.414l-.707-.707A3 3 0 0012.5 11H9V4z" />
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 17h5l-5 5v-5zM11 17H7l4 4v-4zM13 3h5l-5-5v5zM11 3H7l4-4v4z" />
               </svg>
             </div>
-            <p className="text-gray-500 text-center">Không có thông báo nào</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {filter === 'unread' ? 'Không có thông báo chưa đọc' : 'Chưa có thông báo nào'}
+            </h3>
+            <p className="text-gray-500">
+              {filter === 'unread' 
+                ? 'Tất cả thông báo đã được đọc'
+                : 'Thông báo sẽ xuất hiện tại đây khi có hoạt động mới'
+              }
+            </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="space-y-3">
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                  !notification.read ? 'bg-blue-50' : 'bg-white'
+                className={`bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer ${
+                  !notification.read_at ? 'border-l-4 border-red-500' : ''
                 }`}
-                onClick={() => markAsRead(notification.id)}
+                onClick={() => {
+                  if (!notification.read_at) {
+                    markAsRead([notification.id])
+                  }
+                }}
               >
-                <div className="flex items-start space-x-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-                    style={{
-                      backgroundColor: notification.iconBackground,
-                      color: notification.iconColor,
-                    }}
-                  >
-                    {notification.icon}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className={`text-sm font-medium ${
-                        !notification.read ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
-                        {notification.title}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">{notification.time}</span>
-                        {!notification.read && (
-                          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-                        )}
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    {getNotificationIcon(notification.type)}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={`text-sm font-medium ${
+                          !notification.read_at ? 'text-gray-900' : 'text-gray-700'
+                        }`}>
+                          {notification.title}
+                        </h3>
+                        <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                          {formatDate(notification.created_at)}
+                        </span>
                       </div>
+                      <p className={`text-sm ${
+                        !notification.read_at ? 'text-gray-700' : 'text-gray-600'
+                      }`}>
+                        {notification.message}
+                      </p>
+                      {!notification.read_at && (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Mới
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    
-                    <p className="mt-1 text-sm text-gray-600 line-clamp-2">
-                      {notification.message}
-                    </p>
-                    
-                    {notification.hasAction && notification.actionText && (
-                      <button className="mt-2 text-sm text-red-600 hover:text-red-700 font-medium">
-                        {notification.actionText} →
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -329,88 +290,6 @@ export default function NotificationsPage() {
           </div>
         )}
       </div>
-
-      {/* Filter Modal */}
-      {showFilterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-lg w-full max-w-md">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Lọc thông báo</h3>
-                <button
-                  onClick={() => setShowFilterModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 space-y-3 max-h-96 overflow-y-auto">
-              {filters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => toggleFilter(filter.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    filter.selected
-                      ? 'border-red-200 bg-red-50'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                      style={{
-                        backgroundColor: filter.iconBackground,
-                        color: filter.iconColor,
-                      }}
-                    >
-                      {filter.icon}
-                    </div>
-                    <span className="font-medium text-gray-900">{filter.label}</span>
-                  </div>
-                  
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                    filter.selected
-                      ? 'bg-red-600 border-red-600'
-                      : 'border-gray-300'
-                  }`}>
-                    {filter.selected && (
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="p-4 border-t border-gray-200">
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => {
-                    setFilters(prev => prev.map(f => ({ ...f, selected: false })));
-                  }}
-                  className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
-                >
-                  Xóa bộ lọc
-                </button>
-                <button
-                  onClick={() => setShowFilterModal(false)}
-                  className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Áp dụng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Navigation */}
-      <BottomNavigation user={currentUser} currentPage="notifications" />
     </div>
-  );
+  )
 }

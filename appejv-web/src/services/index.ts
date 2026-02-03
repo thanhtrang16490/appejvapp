@@ -7,14 +7,22 @@ import { mockAuthService } from './mock-auth';
 const useRealAPI = !API_CONFIG.USE_MOCK;
 
 // Sector Service
-export const sectorService = useRealAPI ? apiService.sectors : {
+export const sectorService = useRealAPI ? {
+  getAllSectors: () => apiService.getSectors({ include_products: 'true' }),
+  getSectorById: (id: number) => apiService.getSectorById(id),
+  getSectorCombos: (id: number) => apiService.getSectorById(id),
+} : {
   getAllSectors: mockSectorService.getAllSectors,
   getSectorById: mockSectorService.getSectorById,
   getSectorCombos: mockSectorService.getSectorCombos,
 };
 
 // Product Service
-export const productService = useRealAPI ? apiService.products : {
+export const productService = useRealAPI ? {
+  getAllProducts: (params?: Record<string, unknown>) => apiService.getProducts(params),
+  getProductById: (id: string) => apiService.getProductById(parseInt(id)),
+  searchProducts: (query: string, params?: Record<string, unknown>) => apiService.getProducts({ search: query, ...params }),
+} : {
   getAllProducts: async (params?: { sector_id?: number; search?: string; page?: number; limit?: number }) => {
     // Convert mock combos to products format
     const combos = await mockSectorService.getAllCombos();
@@ -64,7 +72,11 @@ export const productService = useRealAPI ? apiService.products : {
 };
 
 // Content Service
-export const contentService = useRealAPI ? apiService.contents : {
+export const contentService = useRealAPI ? {
+  getAllContents: (params?: Record<string, unknown>) => apiService.getContents(params),
+  getContentById: (id: string) => apiService.getContentById(parseInt(id)),
+  getContentsByBrand: (brand: string, params?: Record<string, unknown>) => apiService.getContents({ brand, ...params }),
+} : {
   getAllContents: mockSectorService.getAllContents,
   getContentById: async (contentId: string) => {
     const contents = await mockSectorService.getAllContents();
@@ -77,7 +89,11 @@ export const contentService = useRealAPI ? apiService.contents : {
 };
 
 // User Service
-export const userService = useRealAPI ? apiService.users : {
+export const userService = useRealAPI ? {
+  getAllUsers: (params?: Record<string, unknown>) => apiService.getUsers(params),
+  getUserProfile: () => apiService.get('/users/profile'),
+  updateUserProfile: (data: Record<string, unknown>) => apiService.put('/users/profile', data),
+} : {
   getAllUsers: mockAuthService.getUsers,
   getUserProfile: mockAuthService.getCurrentUser,
   updateUserProfile: mockAuthService.updateUserProfile,
@@ -102,7 +118,7 @@ export const authService = {
         const users = result.data || [];
         
         // Find user by phone
-        const user = users.find((u: any) => u.phone === credentials.phone);
+        const user = users.find((u: { phone: string }) => u.phone === credentials.phone);
         if (!user) {
           throw new Error('User not found');
         }
@@ -152,10 +168,12 @@ export {
 };
 
 // Default export
-export default {
+const services = {
   sectors: sectorService,
   products: productService,
   contents: contentService,
   users: userService,
   auth: authService,
 };
+
+export default services;

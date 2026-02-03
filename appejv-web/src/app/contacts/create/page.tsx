@@ -157,10 +157,15 @@ export default function CreateContactPage() {
       const response = await apiService.post('/contacts', contactData)
       showToast('Tạo liên hệ thành công', 'success')
       router.push('/contacts')
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating contact:', error)
-      if (error.response?.status === 409) {
-        showToast('Số điện thoại đã tồn tại trong hệ thống', 'error')
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { status?: number } }
+        if (apiError.response?.status === 409) {
+          showToast('Số điện thoại đã tồn tại trong hệ thống', 'error')
+        } else {
+          showToast('Không thể tạo liên hệ', 'error')
+        }
       } else {
         showToast('Không thể tạo liên hệ', 'error')
       }

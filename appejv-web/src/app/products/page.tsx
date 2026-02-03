@@ -64,7 +64,7 @@ export default function ProductsPage() {
           productsArray = allCombos;
         } else if (allCombos && typeof allCombos === 'object' && 'data' in allCombos) {
           // Handle API response with data wrapper
-          const responseData = (allCombos as any).data;
+          const responseData = (allCombos as { data: unknown }).data;
           productsArray = Array.isArray(responseData) ? responseData : [];
         } else {
           productsArray = [];
@@ -360,9 +360,25 @@ export default function ProductsPage() {
                               <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                                 {product.description}
                               </p>
-                              <p className="text-sm font-bold text-green-600">
-                                {formatCurrency(product.price)} đ
-                              </p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-sm font-bold text-green-600">
+                                  {formatCurrency(product.price)} đ
+                                </p>
+                                {product.stock_quantity !== undefined && (
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    product.stock_quantity <= (product.min_stock_level || 0) 
+                                      ? 'bg-red-100 text-red-600' 
+                                      : product.stock_quantity <= (product.min_stock_level || 0) * 2
+                                      ? 'bg-yellow-100 text-yellow-600'
+                                      : 'bg-green-100 text-green-600'
+                                  }`}>
+                                    Tồn: {product.stock_quantity}
+                                  </span>
+                                )}
+                              </div>
+                              {product.stock_quantity !== undefined && product.stock_quantity <= (product.min_stock_level || 0) && (
+                                <p className="text-xs text-red-600 font-medium">Sắp hết hàng</p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -422,9 +438,25 @@ export default function ProductsPage() {
                               <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                                 {product.description}
                               </p>
-                              <p className="text-sm font-bold text-amber-600">
-                                {formatCurrency(product.price)} đ
-                              </p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="text-sm font-bold text-amber-600">
+                                  {formatCurrency(product.price)} đ
+                                </p>
+                                {product.stock_quantity !== undefined && (
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    product.stock_quantity <= (product.min_stock_level || 0) 
+                                      ? 'bg-red-100 text-red-600' 
+                                      : product.stock_quantity <= (product.min_stock_level || 0) * 2
+                                      ? 'bg-yellow-100 text-yellow-600'
+                                      : 'bg-green-100 text-green-600'
+                                  }`}>
+                                    Tồn: {product.stock_quantity}
+                                  </span>
+                                )}
+                              </div>
+                              {product.stock_quantity !== undefined && product.stock_quantity <= (product.min_stock_level || 0) && (
+                                <p className="text-xs text-red-600 font-medium">Sắp hết hàng</p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -484,9 +516,25 @@ export default function ProductsPage() {
                             <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                               {product.description}
                             </p>
-                            <p className="text-sm font-bold text-green-600">
-                              {formatCurrency(product.price)} đ
-                            </p>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-bold text-green-600">
+                                {formatCurrency(product.price)} đ
+                              </p>
+                              {product.stock_quantity !== undefined && (
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  product.stock_quantity <= (product.min_stock_level || 0) 
+                                    ? 'bg-red-100 text-red-600' 
+                                    : product.stock_quantity <= (product.min_stock_level || 0) * 2
+                                    ? 'bg-yellow-100 text-yellow-600'
+                                    : 'bg-green-100 text-green-600'
+                                }`}>
+                                  Tồn: {product.stock_quantity}
+                                </span>
+                              )}
+                            </div>
+                            {product.stock_quantity !== undefined && product.stock_quantity <= (product.min_stock_level || 0) && (
+                              <p className="text-xs text-red-600 font-medium">Sắp hết hàng</p>
+                            )}
                           </div>
                         </div>
                       ))}

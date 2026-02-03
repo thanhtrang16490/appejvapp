@@ -9,7 +9,6 @@ import HomeHeader from './HomeHeader';
 import BrandSelector from './BrandSelector';
 import PromoBanners from './PromoBanners';
 import ProductSection from './ProductSection';
-import ContentGallery from './ContentGallery';
 import BottomNavigation from '../layout/BottomNavigation';
 
 export default function HomePage() {
@@ -27,7 +26,7 @@ export default function HomePage() {
         if (Array.isArray(sectorsData)) {
           sectorsArray = sectorsData;
         } else if (sectorsData && typeof sectorsData === 'object' && 'data' in sectorsData) {
-          const responseData = (sectorsData as any).data;
+          const responseData = (sectorsData as Record<string, unknown>).data;
           sectorsArray = Array.isArray(responseData) ? responseData : [];
         } else {
           sectorsArray = [];
@@ -113,14 +112,11 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Content Gallery */}
-        <div className="py-4">
-          <ContentGallery />
-        </div>
+        {/* Content Gallery - Removed as requested */}
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNavigation user={currentUser} currentPage="home" />
+      <BottomNavigation user={currentUser} currentPage="index" />
     </div>
   );
 }
