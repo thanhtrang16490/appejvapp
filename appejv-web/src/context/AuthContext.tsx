@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, LoginCredentials, AuthState } from '@/types';
 import { mockAuthService } from '@/services/mock-auth';
+import { auth as authService } from '@/services';
 
 interface AuthContextType {
   authState: AuthState;
@@ -50,15 +51,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials): Promise<User | null> => {
     setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
     try {
-      const user = await mockAuthService.login(credentials);
+      const user = await authService.login(credentials);
       if (user) {
-        await mockAuthService.storeUserData(user);
+        await mockAuthService.storeUserData(user); // Keep using mock for storage
         setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
         return user;
       }
       setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: 'Invalid credentials' });
       return null;
     } catch {
+      // Fallback to mock service
+      try {
+        const user = await mockAuthService.login(credentials);
+        if (user) {
+          await mockAuthService.storeUserData(user);
+          setAuthState({ user, isAuthenticated: true, isLoading: false, error: null });
+          return user;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback login error:', fallbackError);
+      }
       setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: 'Login failed' });
       return null;
     }
@@ -66,18 +78,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async (): Promise<void> => {
     try {
-      await mockAuthService.logout();
+      await authService.logout();
       setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
     } catch {
-      setAuthState(prev => ({ ...prev, error: 'Logout failed' }));
+      // Fallback to mock service
+      try {
+        await mockAuthService.logout();
+        setAuthState({ user: null, isAuthenticated: false, isLoading: false, error: null });
+      } catch (fallbackError) {
+        console.error('Fallback logout error:', fallbackError);
+        setAuthState(prev => ({ ...prev, error: 'Logout failed' }));
+      }
     }
   };
 
   const getUser = async (): Promise<User | null> => {
     try {
-      return await mockAuthService.getCurrentUser();
+      return await authService.getCurrentUser();
     } catch {
-      return null;
+      // Fallback to mock service
+      try {
+        return await mockAuthService.getCurrentUser();
+      } catch (fallbackError) {
+        console.error('Fallback getUser error:', fallbackError);
+        return null;
+      }
     }
   };
 

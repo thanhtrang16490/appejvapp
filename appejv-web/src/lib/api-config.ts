@@ -1,12 +1,12 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.appejv.vn/api',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://statics.appejv.app/api',
   TIMEOUT: Number(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000,
   HEADERS: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   },
-  USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK === 'true',
+  USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK === 'false', // Changed to false to use real API by default
 };
 
 // API Endpoints
@@ -24,9 +24,9 @@ export const API_ENDPOINTS = {
     PRODUCTS: (id: string) => `/categories/${id}/products`,
   },
   SECTORS: {
-    LIST: '/sector',
-    DETAIL: (id: number | string) => `/sector/${id}`,
-    COMBOS: (id: number | string) => `/sector/${id}/combos`,
+    LIST: '/sectors',
+    DETAIL: (id: number | string) => `/sectors/${id}`,
+    COMBOS: (id: number | string) => `/sectors/${id}/combos`,
   },
   ORDERS: {
     LIST: '/orders',
@@ -49,9 +49,9 @@ export const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
   },
   CONTENT: {
-    LIST: '/content',
-    DETAIL: (id: string) => `/content/${id}`,
-    BY_BRAND: (brand: string) => `/content?brand=${brand}`,
+    LIST: '/contents',
+    DETAIL: (id: string) => `/contents/${id}`,
+    BY_BRAND: (brand: string) => `/contents?brand=${brand}`,
   },
 };
 

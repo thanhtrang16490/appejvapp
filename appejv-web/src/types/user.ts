@@ -33,7 +33,8 @@ export interface AuthState {
 
 // Login credentials interface
 export interface LoginCredentials {
-  phone: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 

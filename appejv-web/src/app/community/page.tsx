@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { mockAuthService } from '@/services/mock-data';
+import { users as userService } from '@/services';
 import { AvatarFrame } from '@/components/ui';
 
 interface Commission {
@@ -171,26 +172,34 @@ export default function CommunityPage() {
     // Get current user (mock data)
     const loadUser = async () => {
       try {
-        const users = await mockAuthService.getUsers();
-        const currentUser = users.find(u => u.role_id === 1) || users[0];
+        const users = await userService.getAllUsers() as User[];
+        const currentUser = users.find((u: { role_id: number }) => u.role_id === 1) || users[0];
         setUser(currentUser);
       } catch (error) {
         console.error('Error loading user:', error);
-        // Fallback user
-        setUser({
-          id: 1,
-          role_id: 1,
-          email: 'admin@appejv.vn',
-          password: '123456',
-          created_at: '2024-01-01T00:00:00Z',
-          commission_rate: 10,
-          name: 'Admin User',
-          phone: '0123456789',
-          parent_id: null,
-          total_commission: 1000000,
-          role: { name: 'admin', description: 'Administrator', id: 1 },
-          address: '123 Đường ABC, Quận 1, TP.HCM',
-        });
+        // Fallback to mock data
+        try {
+          const fallbackUsers = await mockAuthService.getUsers();
+          const currentUser = fallbackUsers.find(u => u.role_id === 1) || fallbackUsers[0];
+          setUser(currentUser);
+        } catch (fallbackError) {
+          console.error('Fallback error:', fallbackError);
+          // Fallback user
+          setUser({
+            id: 1,
+            role_id: 1,
+            email: 'admin@appejv.vn',
+            password: '123456',
+            created_at: '2024-01-01T00:00:00Z',
+            commission_rate: 10,
+            name: 'Admin User',
+            phone: '0123456789',
+            parent_id: null,
+            total_commission: 1000000,
+            role: { name: 'admin', description: 'Administrator', id: 1 },
+            address: '123 Đường ABC, Quận 1, TP.HCM',
+          });
+        }
       }
     };
 

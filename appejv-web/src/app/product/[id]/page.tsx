@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { User, Combo } from '@/types';
 import { PlaceholderFrame } from '@/components/ui';
 import { mockSectorService } from '@/services/mock-sector';
+import { products as productService } from '@/services';
 
 // Default user
 const defaultUser: User = {
@@ -35,11 +36,18 @@ export default function ProductDetailPage() {
     // Load real product data from APPE JV sectors
     const loadProduct = async () => {
       try {
-        const allCombos = await mockSectorService.getAllCombos();
-        const foundProduct = allCombos.find(combo => combo.id === productId);
-        setProduct(foundProduct || null);
+        const foundProduct = await productService.getProductById(productId.toString());
+        setProduct(foundProduct as Combo | null);
       } catch (error) {
         console.error('Error loading product:', error);
+        // Fallback to mock data if API fails
+        try {
+          const allCombos = await mockSectorService.getAllCombos();
+          const foundProduct = allCombos.find(combo => combo.id === productId);
+          setProduct(foundProduct || null);
+        } catch (fallbackError) {
+          console.error('Fallback error:', fallbackError);
+        }
       } finally {
         setLoading(false);
       }

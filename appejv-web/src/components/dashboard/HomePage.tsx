@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { mockSectorService } from '@/services/mock-sector';
+import { sectors as sectorService } from '@/services';
 import { Sector, User } from '@/types';
 import HomeHeader from './HomeHeader';
 import BrandSelector from './BrandSelector';
@@ -34,10 +35,17 @@ export default function HomePage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const sectorsData = await mockSectorService.getAllSectors();
-        setSectors(sectorsData);
+        const sectorsData = await sectorService.getAllSectors();
+        setSectors(sectorsData as Sector[]);
       } catch (error) {
         console.error('Error loading home data:', error);
+        // Fallback to mock data if API fails
+        try {
+          const fallbackSectors = await mockSectorService.getAllSectors();
+          setSectors(fallbackSectors);
+        } catch (fallbackError) {
+          console.error('Fallback error:', fallbackError);
+        }
       } finally {
         setLoading(false);
       }
