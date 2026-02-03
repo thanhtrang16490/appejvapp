@@ -17,47 +17,58 @@ export default function ContentsPage() {
 
   const fetchContents = async () => {
     try {
-      // Mock data for APPE JV contents
-      const mockContents: Content[] = [
-        {
-          id: 1,
-          title: 'Thức ăn chăn nuôi APPE JV - Giải pháp dinh dưỡng tối ưu',
-          content: 'APPE JV mang đến những sản phẩm thức ăn chăn nuôi chất lượng cao với công thức dinh dưỡng cân bằng, giúp vật nuôi phát triển khỏe mạnh và đạt hiệu quả kinh tế tối ưu.',
-          image: null,
-          brand: 'APPE JV',
-          category: 'product',
-          sector_id: 1,
-          created_at: '2024-02-03T10:00:00Z',
-          updated_at: '2024-02-03T10:00:00Z',
-          sector: { id: 1, name: 'Thức ăn gia súc', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 2,
-          title: 'Hướng dẫn chăn nuôi lợn hiệu quả với thức ăn APPE JV',
-          content: 'Tìm hiểu cách sử dụng thức ăn hỗn hợp APPE JV để tối ưu hóa tỷ lệ chuyển đổi thức ăn và tăng trọng nhanh cho lợn ở mọi giai đoạn phát triển.',
-          image: null,
-          brand: 'APPE JV',
-          category: 'guide',
-          sector_id: 1,
-          created_at: '2024-02-02T15:30:00Z',
-          updated_at: '2024-02-02T15:30:00Z',
-          sector: { id: 1, name: 'Thức ăn gia súc', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 3,
-          title: 'Thức ăn gia cầm APPE JV - Chất lượng vượt trội',
-          content: 'Khám phá dòng sản phẩm thức ăn gia cầm APPE JV với công thức đặc biệt dành cho gà, vịt, ngan các giai đoạn phát triển.',
-          image: null,
-          brand: 'APPE JV',
-          category: 'product',
-          sector_id: 2,
-          created_at: '2024-02-01T09:15:00Z',
-          updated_at: '2024-02-01T09:15:00Z',
-          sector: { id: 2, name: 'Thức ăn gia cầm', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        }
-      ]
-      
-      setContents(mockContents)
+      // Fetch contents from Supabase with sector information
+      const { data: contentsData, error } = await supabase
+        .from('contents')
+        .select(`
+          id,
+          title,
+          content,
+          image,
+          brand,
+          category,
+          sector_id,
+          created_at,
+          updated_at,
+          sectors (
+            id,
+            name,
+            description,
+            image,
+            created_at,
+            updated_at
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching contents:', error)
+        setContents([])
+        return
+      }
+
+      // Transform data to match Content interface
+      const transformedContents: Content[] = contentsData.map(content => ({
+        id: content.id,
+        title: content.title,
+        content: content.content,
+        image: content.image,
+        brand: content.brand,
+        category: content.category,
+        sector_id: content.sector_id,
+        created_at: content.created_at,
+        updated_at: content.updated_at,
+        sector: content.sectors ? {
+          id: content.sectors.id,
+          name: content.sectors.name,
+          description: content.sectors.description,
+          image: content.sectors.image,
+          created_at: content.sectors.created_at,
+          updated_at: content.sectors.updated_at
+        } : undefined
+      }))
+
+      setContents(transformedContents)
     } catch (error) {
       console.error('Error fetching contents:', error)
     } finally {

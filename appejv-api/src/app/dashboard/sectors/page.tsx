@@ -17,31 +17,42 @@ export default function SectorsPage() {
 
   const fetchSectors = async () => {
     try {
-      // Mock data for APPE JV sectors
-      const mockSectors: Sector[] = [
-        {
-          id: 1,
-          name: 'Thức ăn gia súc',
-          description: 'Thức ăn hỗn hợp và đậm đặc cho lợn, bò các giai đoạn phát triển',
-          image: null,
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          products: []
-        },
-        {
-          id: 2,
-          name: 'Thức ăn gia cầm',
-          description: 'Thức ăn hỗn hợp cho gà, vịt, ngan các giai đoạn phát triển',
-          image: null,
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          products: []
-        }
-      ]
+      setLoading(true)
       
-      setSectors(mockSectors)
+      // Fetch sectors from Supabase with product count
+      const { data: sectorsData, error } = await supabase
+        .from('sectors')
+        .select(`
+          id,
+          name,
+          description,
+          image,
+          created_at,
+          updated_at,
+          products (count)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching sectors:', error)
+        setSectors([])
+        return
+      }
+
+      // Transform data to match Sector interface
+      const transformedSectors: Sector[] = sectorsData.map(sector => ({
+        id: sector.id,
+        name: sector.name,
+        description: sector.description,
+        image: sector.image,
+        created_at: sector.created_at,
+        updated_at: sector.updated_at
+      }))
+
+      setSectors(transformedSectors)
     } catch (error) {
       console.error('Error fetching sectors:', error)
+      setSectors([])
     } finally {
       setLoading(false)
     }
@@ -120,7 +131,6 @@ export default function SectorsPage() {
             )}
 
             <div className="flex items-center justify-between text-sm text-gray-500">
-              <span>Sản phẩm: {sector.products?.length || 0}</span>
               <span>Cập nhật: {new Date(sector.updated_at).toLocaleDateString('vi-VN')}</span>
             </div>
           </div>

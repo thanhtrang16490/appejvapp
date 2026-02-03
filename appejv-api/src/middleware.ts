@@ -23,11 +23,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
+  // Redirect root to login if not authenticated, dashboard if authenticated
+  if (req.nextUrl.pathname === '/') {
+    if (session) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    } else {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
+  }
+
   // Add CORS headers for API routes
   if (req.nextUrl.pathname.startsWith('/api/')) {
     const origin = req.headers.get('origin')
     const allowedOrigins = [
       'http://localhost:3000',
+      'http://localhost:3001',
       'https://appejv-web.vercel.app',
       process.env.CORS_ORIGIN
     ].filter(Boolean)

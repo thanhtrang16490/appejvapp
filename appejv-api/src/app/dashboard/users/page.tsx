@@ -17,55 +17,64 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      // Mock data for now - replace with actual Supabase query
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          email: 'admin@appejv.vn',
-          name: 'Admin User',
-          phone: '0123456789',
-          role_id: 1,
-          parent_id: null,
-          commission_rate: 10,
-          total_commission: 1000000,
-          address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-          role: { id: 1, name: 'Admin', description: 'Administrator', created_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: '2',
-          email: 'agent@appejv.vn',
-          name: 'Nguyễn Văn A',
-          phone: '0987654321',
-          role_id: 2,
-          parent_id: '1',
-          commission_rate: 8,
-          total_commission: 500000,
-          address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-          created_at: '2024-01-15T00:00:00Z',
-          updated_at: '2024-01-15T00:00:00Z',
-          role: { id: 2, name: 'Agent', description: 'Sales Agent', created_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: '3',
-          email: 'customer@appejv.vn',
-          name: 'Trần Thị B',
-          phone: '0901234567',
-          role_id: 3,
-          parent_id: '2',
-          commission_rate: null,
-          total_commission: null,
-          address: 'Km 50, Quốc lộ 1A, xã Tiên Tân, Tp Phủ Lý, tỉnh Hà Nam',
-          created_at: '2024-02-01T00:00:00Z',
-          updated_at: '2024-02-01T00:00:00Z',
-          role: { id: 3, name: 'Customer', description: 'Customer', created_at: '2024-01-01T00:00:00Z' }
-        }
-      ]
+      setLoading(true)
       
-      setUsers(mockUsers)
+      // Fetch users from Supabase with role information
+      const { data: usersData, error } = await supabase
+        .from('users')
+        .select(`
+          id,
+          email,
+          name,
+          phone,
+          role_id,
+          parent_id,
+          commission_rate,
+          total_commission,
+          address,
+          created_at,
+          updated_at,
+          roles (
+            id,
+            name,
+            description,
+            created_at
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching users:', error)
+        // Fallback to empty array if database query fails
+        setUsers([])
+        return
+      }
+
+      // Transform data to match User interface
+      const transformedUsers: User[] = usersData.map(user => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        role_id: user.role_id,
+        parent_id: user.parent_id,
+        commission_rate: user.commission_rate,
+        total_commission: user.total_commission,
+        address: user.address,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        role: user.roles ? {
+          id: user.roles.id,
+          name: user.roles.name,
+          description: user.roles.description,
+          created_at: user.roles.created_at
+        } : undefined
+      }))
+
+      setUsers(transformedUsers)
     } catch (error) {
       console.error('Error fetching users:', error)
+      setUsers([])
     } finally {
       setLoading(false)
     }

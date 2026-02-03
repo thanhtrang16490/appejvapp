@@ -17,68 +17,61 @@ export default function ProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      // Mock data based on real APPE JV products
-      const mockProducts: Product[] = [
-        {
-          id: 1,
-          name: 'HH cho lợn sữa (7 ngày tuổi - 10kg)',
-          description: 'Mã SP: A1 - Đạm 20% - Bao 20kg',
-          price: 27100,
-          sector_id: 1,
-          image: null,
-          created_at: '2024-05-11T00:00:00Z',
-          updated_at: '2024-05-11T00:00:00Z',
-          sector: { id: 1, name: 'Thức ăn gia súc', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 2,
-          name: 'HH cho lợn con tập ăn (10 ngày tuổi - 20kg)',
-          description: 'Mã SP: A2 - Đạm 19% - Bao 25kg',
-          price: 18090,
-          sector_id: 1,
-          image: null,
-          created_at: '2024-05-11T00:00:00Z',
-          updated_at: '2024-05-11T00:00:00Z',
-          sector: { id: 1, name: 'Thức ăn gia súc', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 16,
-          name: 'HH cho gà công nghiệp 01 - 12 ngày tuổi',
-          description: 'Mã SP: A2010 - Đạm 21% - Bao 25kg',
-          price: 13480,
-          sector_id: 2,
-          image: null,
-          created_at: '2024-07-15T00:00:00Z',
-          updated_at: '2024-07-15T00:00:00Z',
-          sector: { id: 2, name: 'Thức ăn gia cầm', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 17,
-          name: 'HH cho gà công nghiệp 13 - 24 ngày tuổi',
-          description: 'Mã SP: A2011 - Đạm 20% - Bao 25kg',
-          price: 13180,
-          sector_id: 2,
-          image: null,
-          created_at: '2024-07-15T00:00:00Z',
-          updated_at: '2024-07-15T00:00:00Z',
-          sector: { id: 2, name: 'Thức ăn gia cầm', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        },
-        {
-          id: 14,
-          name: 'Đậm đặc cao cấp cho lợn tập ăn - xuất chuồng',
-          description: 'Mã SP: A999 - Đạm 46% - Bao 25kg',
-          price: 18770,
-          sector_id: 1,
-          image: null,
-          created_at: '2024-05-11T00:00:00Z',
-          updated_at: '2024-05-11T00:00:00Z',
-          sector: { id: 1, name: 'Thức ăn gia súc', description: null, image: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z' }
-        }
-      ]
+      setLoading(true)
       
-      setProducts(mockProducts)
+      // Fetch products from Supabase with sector information
+      const { data: productsData, error } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name,
+          description,
+          price,
+          sector_id,
+          image,
+          created_at,
+          updated_at,
+          sectors (
+            id,
+            name,
+            description,
+            image,
+            created_at,
+            updated_at
+          )
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching products:', error)
+        setProducts([])
+        return
+      }
+
+      // Transform data to match Product interface
+      const transformedProducts: Product[] = productsData.map(product => ({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        sector_id: product.sector_id,
+        image: product.image,
+        created_at: product.created_at,
+        updated_at: product.updated_at,
+        sector: product.sectors ? {
+          id: product.sectors.id,
+          name: product.sectors.name,
+          description: product.sectors.description,
+          image: product.sectors.image,
+          created_at: product.sectors.created_at,
+          updated_at: product.sectors.updated_at
+        } : undefined
+      }))
+
+      setProducts(transformedProducts)
     } catch (error) {
       console.error('Error fetching products:', error)
+      setProducts([])
     } finally {
       setLoading(false)
     }
